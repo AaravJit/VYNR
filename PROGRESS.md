@@ -1,6 +1,6 @@
 # Progress
 
-Status as of 25 November 2026: **MVP feature-complete and verified in automated tests and native bundle builds. Not yet run on a physical device or simulator** (the build environment had no iOS or Android runtime). Real AI identification is implemented and unit-tested against a mocked API, but has **not** been exercised against the live Anthropic API because no key was available.
+Status as of 25 November 2026 (Phase 2): **MVP feature-complete, with on-device redaction, persistent server quotas and a spend ceiling, CI and independent PR reviews, and the neon dusk redesign. Verified in automated tests, native bundle builds and web screenshots and verified in automated tests and native bundle builds. Not yet run on a physical device or simulator** (the build environment had no iOS or Android runtime). Real AI identification is implemented and unit-tested against a mocked API, but has **not** been exercised against the live Anthropic API because no key was available.
 
 ## Verification results
 
@@ -8,10 +8,11 @@ Status as of 25 November 2026: **MVP feature-complete and verified in automated 
 | --- | --- | --- |
 | Type check (app) | `npm run typecheck` | Pass, strict mode |
 | Lint | `npm run lint` | Pass, 0 warnings |
-| App tests | `npm test` | **99/99 pass** in 9 suites |
+| App tests | `npm test` | **145/145 pass** in 12 suites (includes 40 colour-contrast checks) |
 | Server type check | `npm --prefix server run typecheck` | Pass |
 | Server tests | `npm --prefix server test` | **31/31 pass** |
 | Native bundles | `npm run export:check` | iOS and Android Hermes bundles build |
+| Redesign visual check | web export + Playwright screenshots at 390×844 | Onboarding, Home, Garage, Contracts and Profile render as designed; not yet seen on a phone |
 | Server smoke test | start with and without a key, call `/health` and `/v1/recognize` | Refuses to start without a key; health and validation respond correctly |
 
 What the app tests cover:

@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Linking, Platform, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 
 import { Icon, type IconName } from '@/components/Icon';
-import { Brackets, Button, Notice, Screen, Txt } from '@/components/ui';
+import { Wordmark } from '@/components/Brand';
+import { Glow, GradientFill } from '@/components/Gradient';
+import { Button, Notice, Screen, Txt } from '@/components/ui';
 import { sanitizeUsername } from '@/services/gameService';
 import { recognitionConfig, useAppState, useAppStore, useHaptics } from '@/state/AppProvider';
 import { colors, radius, space } from '@/theme/tokens';
@@ -47,20 +49,21 @@ export default function Onboarding() {
       <Screen edges={['top', 'bottom']} contentStyle={{ paddingBottom: space.xl, flexGrow: 1 }}>
         <View style={styles.progress} accessibilityLabel={`Step ${step + 1} of ${STEPS}`}>
           {Array.from({ length: STEPS }, (_, i) => (
-            <View key={i} style={[styles.pip, i <= step && { backgroundColor: colors.accent }]} />
+            <View key={i} style={styles.pip}>
+              {i <= step && <GradientFill direction="horizontal" />}
+            </View>
           ))}
         </View>
 
         {step === 0 && (
           <View style={styles.body}>
             <View style={styles.hero}>
-              <Brackets color={colors.accent} size={22} />
+              <Glow color={colors.accent} size={360} style={{ top: -120, left: -140 }} />
+              <Glow color={colors.blue} size={320} style={{ bottom: -140, right: -140 }} />
               <Txt variant="label" color={colors.accent}>
-                AUTOMOTIVE INTELLIGENCE
+                SPOT · IDENTIFY · COLLECT
               </Txt>
-              <Txt variant="display" style={{ fontSize: 56, lineHeight: 58, letterSpacing: -2 }}>
-                VYNR
-              </Txt>
+              <Wordmark height={58} />
               <Txt variant="body" color={colors.textMuted}>
                 Spot real cars in the wild. Identify them, build your garage, and complete contracts to level up.
               </Txt>
@@ -121,8 +124,8 @@ export default function Onboarding() {
                 • VYNR never collects your location and never reads number plates.
               </Txt>
               <Txt variant="body" color={colors.textMuted}>
-                • Photos are downscaled and stripped of metadata. They are discarded after identification unless you
-                choose to keep thumbnails.
+                • Faces and number plates are blurred on your phone before a photo is sent or kept. Photos are stripped of
+                metadata and discarded after identification unless you choose to keep thumbnails.
               </Txt>
             </View>
             {recognitionConfig.mode === 'unconfigured' ? (
@@ -218,9 +221,19 @@ export default function Onboarding() {
 
 const styles = StyleSheet.create({
   progress: { flexDirection: 'row', gap: 6 },
-  pip: { flex: 1, height: 3, borderRadius: 2, backgroundColor: colors.border },
+  pip: { flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.border, overflow: 'hidden' },
   body: { flex: 1, gap: space.lg, minHeight: 520 },
-  hero: { marginTop: space.xxxl, padding: space.xl, gap: space.md },
+  hero: {
+    marginTop: space.xxl,
+    padding: space.xl,
+    paddingVertical: space.xxxl,
+    gap: space.lg,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
+  },
   rule: {
     flexDirection: 'row',
     gap: space.md,

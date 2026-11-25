@@ -37,8 +37,8 @@ export function VehicleFacts({ vehicle }: { vehicle: CatalogVehicle }) {
   return (
     <Panel style={{ gap: space.md }}>
       <View style={styles.header}>
-        <Icon name="shield" size={16} color={colors.accent} />
-        <Txt variant="label" color={colors.accent}>
+        <Icon name="shield" size={16} color={colors.blue} />
+        <Txt variant="label" color={colors.blue}>
           VERIFIED CATALOG RECORD
         </Txt>
       </View>

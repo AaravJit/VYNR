@@ -4,10 +4,11 @@ import { AccessibilityInfo, Animated, Easing, StyleSheet, View } from 'react-nat
 
 import { catalog, RARITY_LABELS } from '@/catalog';
 import { ContractCard, VehicleEmblem } from '@/components/game';
-import { Brackets, Button, Panel, RarityBadge, Screen, SectionHeader, Txt } from '@/components/ui';
+import { Glow, GradientFill } from '@/components/Gradient';
+import { Button, Panel, RarityBadge, Screen, SectionHeader, Txt } from '@/components/ui';
 import { useAppState, useHaptics } from '@/state/AppProvider';
 import { getOutcome } from '@/state/scanSession';
-import { colors, rarityColors, space } from '@/theme/tokens';
+import { colors, radius, rarityColors, shadow, space } from '@/theme/tokens';
 
 export default function Discovery() {
   const { encounterId } = useLocalSearchParams<{ encounterId: string }>();
@@ -60,8 +61,7 @@ export default function Discovery() {
     <Screen edges={['top', 'bottom']} contentStyle={{ paddingBottom: space.xxxl }}>
       <Animated.View
         style={[
-          styles.hero,
-          { borderColor: accent },
+          styles.heroEdge,
           {
             opacity: reveal,
             transform: [{ scale: reveal.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }],
@@ -74,12 +74,17 @@ export default function Discovery() {
             : `Field note logged: ${encounter.label}. ${total} XP earned.`
         }
       >
-        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: accent, opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.08] }) }]} />
-        <Brackets color={accent} size={24} />
+        <GradientFill />
+        <View style={styles.hero}>
+        <Animated.View style={[styles.heroGlow, { opacity: glow }]}>
+          <Glow color={accent} size={320} />
+        </Animated.View>
+        <View style={[styles.tag, { borderColor: accent }]}>
         <Txt variant="label" color={accent}>
           {vehicle ? (first ? 'NEW DISCOVERY' : `ENCOUNTER #${encounter.encounterIndex + 1}`) : 'FIELD NOTE LOGGED'}
         </Txt>
-        {vehicle && <VehicleEmblem vehicle={vehicle} size={88} />}
+        </View>
+        {vehicle && <VehicleEmblem vehicle={vehicle} size={104} />}
         <Txt variant="h1" align="center">
           {vehicle ? catalog.displayName(vehicle) : encounter.label}
         </Txt>
@@ -92,19 +97,23 @@ export default function Discovery() {
           </>
         )}
         <Animated.View style={{ opacity: glow }}>
-          <Txt variant="display" color={colors.accent} align="center">
-            +{total.toLocaleString()} XP
-          </Txt>
+          <View style={styles.xpPill}>
+            <GradientFill direction="horizontal" />
+            <Txt variant="h1" color={colors.accentInk} align="center">
+              +{total.toLocaleString()} XP
+            </Txt>
+          </View>
         </Animated.View>
         {encounter.source === 'simulated' && (
           <Txt variant="label" color={colors.warning}>
             SIMULATED IDENTIFICATION · DEV MODE
           </Txt>
         )}
+        </View>
       </Animated.View>
 
       {levelUp && outcome && (
-        <Panel bracket={colors.accent} style={{ alignItems: 'center', gap: 4 }}>
+        <Panel highlight style={{ alignItems: 'center', gap: 4 }}>
           <Txt variant="label" color={colors.accent}>
             LEVEL UP
           </Txt>
@@ -121,7 +130,7 @@ export default function Discovery() {
                 <Txt variant="small" color={colors.textMuted} style={{ flex: 1 }}>
                   {li.label}
                 </Txt>
-                <Txt variant="mono" color={colors.accent}>
+                <Txt variant="mono" color={colors.violet}>
                   +{li.amount}
                 </Txt>
               </View>
@@ -163,15 +172,18 @@ export default function Discovery() {
 }
 
 const styles = StyleSheet.create({
+  heroEdge: { marginTop: space.xl, borderRadius: radius.xl, padding: 1.5, overflow: 'hidden', ...shadow.glow },
   hero: {
-    marginTop: space.xl,
     padding: space.xl,
+    paddingVertical: space.xxl,
     gap: space.md,
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 18,
+    borderRadius: radius.xl - 1.5,
     overflow: 'hidden',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.bg,
   },
+  heroGlow: { position: 'absolute', top: -10, alignSelf: 'center', width: 320, height: 320 },
+  tag: { borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 5, backgroundColor: colors.overlay },
+  xpPill: { borderRadius: radius.pill, overflow: 'hidden', paddingHorizontal: space.xl, paddingVertical: space.sm, marginTop: space.sm },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.md },
 });

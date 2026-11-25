@@ -6,6 +6,7 @@ import { ActivityIndicator, Linking, Pressable, StyleSheet, View } from 'react-n
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DevModeBanner } from '@/components/game';
+import { GradientFill } from '@/components/Gradient';
 import { Icon } from '@/components/Icon';
 import { ScanOverlay } from '@/components/ScanOverlay';
 import { Button, Notice, Txt } from '@/components/ui';
@@ -153,9 +154,12 @@ export default function Scanner() {
         <View style={{ flex: 1 }} pointerEvents="none" />
         <View style={styles.bottom}>
           {error && <Notice tone="danger" title="Capture failed" body={error} />}
-          <Txt variant="small" color={colors.textMuted} align="center">
-            Never scan while driving. Stay on public ground.
-          </Txt>
+          <View style={styles.hint}>
+            <Icon name="shield" size={14} color={colors.blue} />
+            <Txt variant="small" color={colors.textMuted}>
+              Never scan while driving. Stay on public ground.
+            </Txt>
+          </View>
           <View style={styles.shutterRow}>
             <View style={{ width: 64 }} />
             <Pressable
@@ -166,7 +170,13 @@ export default function Scanner() {
               onPress={() => void capture()}
               style={({ pressed }) => [styles.shutter, (pressed || busy) && { transform: [{ scale: 0.94 }] }]}
             >
-              {busy ? <ActivityIndicator color={colors.accentInk} /> : <View style={styles.shutterInner} />}
+              {busy ? (
+                <ActivityIndicator color={colors.text} />
+              ) : (
+                <View style={styles.shutterInner}>
+                  <GradientFill />
+                </View>
+              )}
             </Pressable>
             {recognitionConfig.mode === 'mock' ? (
               <Pressable
@@ -217,25 +227,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bottom: { padding: space.lg, gap: space.md, backgroundColor: colors.overlay },
+  bottom: {
+    margin: space.md,
+    padding: space.lg,
+    gap: space.md,
+    backgroundColor: colors.overlay,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  hint: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   shutterRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.lg },
   shutter: {
     width: 78,
     height: 78,
     borderRadius: 39,
     borderWidth: 3,
-    borderColor: colors.accent,
+    borderColor: colors.text,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(198,255,61,0.15)',
+    backgroundColor: 'rgba(247,242,255,0.10)',
   },
-  shutterInner: { width: 60, height: 60, borderRadius: 30, backgroundColor: colors.accent },
+  shutterInner: { width: 62, height: 62, borderRadius: 31, overflow: 'hidden' },
   simBtn: {
     width: 64,
     height: 44,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: 'rgba(255,193,69,0.5)',
+    borderColor: colors.warningLine,
     alignItems: 'center',
     justifyContent: 'center',
   },

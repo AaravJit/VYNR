@@ -3,19 +3,21 @@ import { type BottomTabBarProps, Tabs } from 'expo-router/js-tabs';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { GradientFill } from '@/components/Gradient';
 import { Icon, type IconName } from '@/components/Icon';
 import { Txt } from '@/components/ui';
 import { useHaptics } from '@/state/AppProvider';
-import { colors, radius, space } from '@/theme/tokens';
+import { colors, radius, shadow, space } from '@/theme/tokens';
 
-const TABS: { name: string; label: string; icon: IconName }[] = [
-  { name: 'index', label: 'Home', icon: 'home' },
-  { name: 'garage', label: 'Garage', icon: 'garage' },
-  { name: 'contracts', label: 'Contracts', icon: 'contracts' },
-  { name: 'profile', label: 'Profile', icon: 'profile' },
+/** Each destination owns one hue from the signal gradient, so colour tells you where you are. */
+const TABS: { name: string; label: string; icon: IconName; hue: string; soft: string }[] = [
+  { name: 'index', label: 'Home', icon: 'home', hue: colors.accent, soft: colors.accentSoft },
+  { name: 'garage', label: 'Garage', icon: 'garage', hue: colors.violet, soft: colors.violetSoft },
+  { name: 'contracts', label: 'Contracts', icon: 'contracts', hue: colors.blue, soft: colors.blueSoft },
+  { name: 'profile', label: 'Profile', icon: 'profile', hue: colors.accent, soft: colors.accentSoft },
 ];
 
-/** Custom tab bar with a raised scanner trigger in the centre. */
+/** Floating glass tab bar with a gradient scanner orb in the centre. */
 function VynrTabBar({ state, navigateToTab }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const haptics = useHaptics();
@@ -38,33 +40,41 @@ function VynrTabBar({ state, navigateToTab }: BottomTabBarProps) {
         }}
         style={styles.tab}
       >
-        <Icon name={tab.icon} size={22} color={focused ? colors.accent : colors.textFaint} />
-        <Txt variant="label" color={focused ? colors.text : colors.textFaint} style={{ fontSize: 10 }}>
+        <View style={[styles.tabIcon, focused && { backgroundColor: tab.soft }]}>
+          <Icon name={tab.icon} size={21} color={focused ? colors.text : colors.textFaint} strokeWidth={focused ? 2 : 1.75} />
+        </View>
+        <Txt variant="label" color={focused ? colors.text : colors.textFaint} style={{ fontSize: 9.5, letterSpacing: 0.8 }}>
           {tab.label.toUpperCase()}
         </Txt>
+        {focused && <View style={[styles.tabDot, { backgroundColor: tab.hue }]} />}
       </Pressable>
     );
   };
   return (
-    <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, space.sm) }]}>
-      {renderTab(0)}
-      {renderTab(1)}
-      <View style={styles.scanSlot}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Open scanner"
-          accessibilityHint="Opens the camera to photograph a vehicle"
-          onPress={() => {
-            haptics.impact();
-            router.push('/scan');
-          }}
-          style={({ pressed }) => [styles.scanButton, pressed && { transform: [{ scale: 0.95 }] }]}
-        >
-          <Icon name="scan" size={28} color={colors.accentInk} strokeWidth={2.2} />
-        </Pressable>
+    <View style={[styles.barWrap, { paddingBottom: Math.max(insets.bottom, space.md) }]} pointerEvents="box-none">
+      <View style={styles.bar}>
+        {renderTab(0)}
+        {renderTab(1)}
+        <View style={styles.scanSlot}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open scanner"
+            accessibilityHint="Opens the camera to photograph a vehicle"
+            onPress={() => {
+              haptics.impact();
+              router.push('/scan');
+            }}
+            style={({ pressed }) => [styles.scanButton, pressed && { transform: [{ scale: 0.94 }] }]}
+          >
+            <GradientFill />
+            <View style={{ zIndex: 1 }}>
+            <Icon name="scan" size={28} color={colors.accentInk} strokeWidth={2.2} />
+          </View>
+          </Pressable>
+        </View>
+        {renderTab(2)}
+        {renderTab(3)}
       </View>
-      {renderTab(2)}
-      {renderTab(3)}
     </View>
   );
 }
@@ -73,7 +83,10 @@ export default function TabLayout() {
   return (
     <Tabs
       tabBar={(props) => <VynrTabBar {...props} />}
-      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg } }}
+      screenOptions={{
+        headerShown: false,
+        sceneStyle: { backgroundColor: colors.bg },
+      }}
     >
       {TABS.map((t) => (
         <Tabs.Screen key={t.name} name={t.name} options={{ title: t.label }} />
@@ -83,30 +96,58 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
+  barWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: space.md,
+  },
   bar: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    backgroundColor: 'rgba(10,11,13,0.97)',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-    paddingTop: space.sm,
+    alignItems: 'center',
+    backgroundColor: 'rgba(21,15,36,0.96)',
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    borderRadius: radius.xl,
+    paddingVertical: space.sm,
+    paddingHorizontal: space.xs,
+    ...shadow.card,
   },
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4, minHeight: 48 },
-  scanSlot: { width: 84, alignItems: 'center' },
-  scanButton: {
-    width: 62,
-    height: 62,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accent,
+  tab: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -26,
+    gap: 3,
+    minHeight: 52,
+  },
+  tabIcon: {
+    width: 40,
+    height: 28,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabDot: {
+    position: 'absolute',
+    bottom: -4,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.accent,
+  },
+  scanSlot: { width: 76, alignItems: 'center' },
+  scanButton: {
+    width: 64,
+    height: 64,
+    borderRadius: radius.pill,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -30,
     borderWidth: 4,
     borderColor: colors.bg,
-    shadowColor: colors.accent,
-    shadowOpacity: 0.35,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 8,
+    backgroundColor: colors.accent,
+    ...shadow.glow,
   },
 });

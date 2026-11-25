@@ -35,7 +35,7 @@ interface Props {
 export function Icon({ name, size = 22, color = colors.text, strokeWidth = 1.75 }: Props) {
   const p = { stroke: color, strokeWidth, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" accessibilityElementsHidden importantForAccessibility="no">
+    <Svg width={size} height={size} viewBox="0 0 24 24" style={{ position: 'relative' }} accessibilityElementsHidden importantForAccessibility="no">
       {name === 'home' && (
         <>
           <Path d="M4 11.5 12 5l8 6.5" {...p} />

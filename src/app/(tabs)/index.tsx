@@ -1,14 +1,18 @@
 import { router } from 'expo-router';
 import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { CATEGORY_LABELS, catalog } from '@/catalog';
+import { Wordmark } from '@/components/Brand';
 import { ContractCard, DevModeBanner, LevelPanel, VehicleRow } from '@/components/game';
+import { Glow, GradientFill } from '@/components/Gradient';
 import { Icon } from '@/components/Icon';
 import { Button, EmptyState, Panel, ProgressBar, Screen, SectionHeader, Txt } from '@/components/ui';
 import type { VehicleCategory } from '@/domain/types';
 import { useAppState, useAppStore } from '@/state/AppProvider';
-import { colors, radius, space } from '@/theme/tokens';
+import { colors, radius, shadow, space } from '@/theme/tokens';
+
+const CAT_TINTS = [colors.accent, colors.violet, colors.blue];
 
 const FEATURED: VehicleCategory[] = ['sports', 'supercar', 'offroad', 'pickup', 'suv', 'hypercar'];
 
@@ -41,38 +45,62 @@ export default function Home() {
   return (
     <Screen>
       <View style={styles.header}>
-        <Txt variant="h1">VYNR</Txt>
+        <Wordmark height={26} />
         <DevModeBanner />
       </View>
 
       <LevelPanel level={state.level} username={state.player?.username ?? ''} />
 
-      <Panel style={styles.scanCta} onPress={() => router.push('/scan')} accessibilityLabel="Open scanner">
-        <View style={{ flex: 1, gap: 4 }}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Open scanner"
+        accessibilityHint="Opens the camera to photograph a vehicle"
+        onPress={() => router.push('/scan')}
+        style={({ pressed }) => [styles.scanCta, pressed && { transform: [{ scale: 0.985 }] }]}
+      >
+        <GradientFill />
+        <Glow color="#FFFFFF" size={220} style={{ right: -70, top: -80, opacity: 0.35 }} />
+        <View style={{ flex: 1, gap: 6 }}>
           <Txt variant="label" color={colors.accentInk}>
             SCANNER READY
           </Txt>
-          <Txt variant="h2" color={colors.accentInk}>
+          <Txt variant="h1" color={colors.accentInk}>
             Identify a vehicle
+          </Txt>
+          <Txt variant="small" color={colors.accentInk}>
+            Faces and plates are blurred on your phone first.
           </Txt>
         </View>
         <View style={styles.scanIcon}>
-          <Icon name="scan" size={28} color={colors.accent} strokeWidth={2} />
+          <Icon name="scan" size={30} color={colors.text} strokeWidth={2} />
         </View>
-      </Panel>
+      </Pressable>
 
-      <Panel style={{ gap: space.md }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+      <View style={styles.stats}>
+        <View style={[styles.statCard, { flex: 1.4 }]}>
           <Txt variant="label" upper>
             Collection
           </Txt>
-          <Txt variant="mono" color={colors.textMuted}>
-            {state.stats.uniqueVehicles}/{state.stats.catalogSize}
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.sm }}>
+            <Txt variant="stat">{state.stats.completionPercent.toFixed(1)}%</Txt>
+            <Txt variant="mono" color={colors.textMuted}>
+              {state.stats.uniqueVehicles}/{state.stats.catalogSize}
+            </Txt>
+          </View>
+          <ProgressBar value={state.stats.completionPercent / 100} label="Collection completion" height={6} />
+        </View>
+        <View style={styles.statCard}>
+          <Txt variant="label" upper>
+            Sightings
+          </Txt>
+          <Txt variant="stat" color={colors.blue}>
+            {state.stats.totalEncounters.toLocaleString()}
+          </Txt>
+          <Txt variant="small" color={colors.textFaint}>
+            all time
           </Txt>
         </View>
-        <Txt variant="stat">{state.stats.completionPercent.toFixed(1)}%</Txt>
-        <ProgressBar value={state.stats.completionPercent / 100} label="Collection completion" />
-      </Panel>
+      </View>
 
       <SectionHeader
         title="Daily contracts"
@@ -122,22 +150,28 @@ export default function Home() {
       )}
 
       <SectionHeader title="Featured categories" />
-      <View style={styles.grid}>
-        {featured.map(({ cat, total, found }) => (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.catRow}
+        style={styles.catScroll}
+      >
+        {featured.map(({ cat, total, found }, i) => (
           <Panel
             key={cat}
             style={styles.catTile}
             onPress={() => router.push({ pathname: '/garage', params: { category: cat } })}
             accessibilityLabel={`${CATEGORY_LABELS[cat]}: ${found} of ${total} discovered`}
           >
-            <Txt variant="bodyStrong">{CATEGORY_LABELS[cat]}</Txt>
+            <View style={[styles.catSwatch, { backgroundColor: CAT_TINTS[i % CAT_TINTS.length] }]} />
+            <Txt variant="h3">{CATEGORY_LABELS[cat]}</Txt>
             <Txt variant="mono" color={colors.textMuted}>
               {found}/{total}
             </Txt>
-            <ProgressBar value={total ? found / total : 0} height={3} />
+            <ProgressBar value={total ? found / total : 0} height={4} />
           </Panel>
         ))}
-      </View>
+      </ScrollView>
     </Screen>
   );
 }
@@ -145,20 +179,35 @@ export default function Home() {
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
   scanCta: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    padding: space.xl,
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.md,
+    backgroundColor: colors.accent,
+    ...shadow.glow,
   },
   scanIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.md,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: colors.accentInk,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  catTile: { width: '48.5%', flexGrow: 1, gap: 6, padding: space.md },
+  stats: { flexDirection: 'row', gap: space.sm },
+  statCard: {
+    flex: 1,
+    gap: 6,
+    padding: space.lg,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.glass,
+  },
+  catScroll: { marginHorizontal: -space.lg },
+  catRow: { paddingHorizontal: space.lg, gap: space.sm },
+  catTile: { width: 148, gap: 6, padding: space.md },
+  catSwatch: { width: 22, height: 4, borderRadius: 2, marginBottom: 2 },
 });

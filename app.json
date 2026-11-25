@@ -7,8 +7,8 @@
     "icon": "./assets/images/icon.png",
     "scheme": "vynr",
     "userInterfaceStyle": "dark",
-    "backgroundColor": "#07080A",
-    "primaryColor": "#C6FF3D",
+    "backgroundColor": "#0B0716",
+    "primaryColor": "#FF4FA3",
     "ios": {
       "bundleIdentifier": "com.aaravjit.vynr",
       "supportsTablet": false,
@@ -19,7 +19,7 @@
     "android": {
       "package": "com.aaravjit.vynr",
       "adaptiveIcon": {
-        "backgroundColor": "#07080A",
+        "backgroundColor": "#0B0716",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -35,7 +35,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#07080A",
+          "backgroundColor": "#0B0716",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 120
         }

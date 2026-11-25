@@ -300,7 +300,7 @@ export default function Identify() {
 
       {vehicle && (
         <>
-          <Panel bracket={colors.accentLine} style={{ gap: space.md }}>
+          <Panel highlight style={{ gap: space.md }}>
             <View style={styles.predHeader}>
               <Txt variant="label" color={isManual ? colors.info : session.result?.simulated ? colors.warning : colors.accent}>
                 {isManual ? 'IDENTIFIED BY YOU' : session.result?.simulated ? 'SIMULATED PREDICTION' : 'AI PREDICTION'}

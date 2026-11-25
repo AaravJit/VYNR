@@ -16,8 +16,9 @@ import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { RARITY_LABELS } from '@/catalog';
 import type { Rarity } from '@/domain/types';
 import { useHaptics } from '@/state/AppProvider';
-import { colors, radius, rarityColors, space, type, type TypeVariant } from '@/theme/tokens';
+import { colors, fonts, radius, rarityColors, shadow, space, type, type TypeVariant } from '@/theme/tokens';
 
+import { GradientFill, Glow } from './Gradient';
 import { Icon, type IconName } from './Icon';
 
 // ── Text ─────────────────────────────────────────────────────────────
@@ -53,11 +54,14 @@ interface ScreenProps {
   edges?: Edge[];
   contentStyle?: StyleProp<ViewStyle>;
   header?: ReactNode;
+  /** Draws the soft pink/violet dusk glow at the top of the screen. */
+  glow?: boolean;
 }
 
-export function Screen({ children, scroll = true, edges = ['top'], contentStyle, header }: ScreenProps) {
+export function Screen({ children, scroll = true, edges = ['top'], contentStyle, header, glow = true }: ScreenProps) {
   return (
     <SafeAreaView style={styles.screen} edges={edges}>
+      {glow && <ScreenGlow />}
       {header}
       {scroll ? (
         <ScrollView
@@ -71,6 +75,15 @@ export function Screen({ children, scroll = true, edges = ['top'], contentStyle,
         <View style={[styles.screenContent, { flex: 1 }, contentStyle]}>{children}</View>
       )}
     </SafeAreaView>
+  );
+}
+
+function ScreenGlow() {
+  return (
+    <View pointerEvents="none" style={styles.glowWrap}>
+      <Glow color={colors.accent} size={420} style={{ top: -250, left: -150 }} />
+      <Glow color={colors.violet} size={380} style={{ top: -210, right: -170 }} />
+    </View>
   );
 }
 
@@ -104,77 +117,78 @@ export function Button({ label, variant = 'primary', icon, loading, disabled, on
       style={({ pressed }) => [
         styles.button,
         compact && styles.buttonCompact,
-        variant === 'primary' && { backgroundColor: pressed ? '#B3EC2C' : colors.accent },
+        variant === 'primary' && [styles.buttonPrimary, !isDisabled && shadow.glow],
         variant === 'secondary' && {
-          backgroundColor: pressed ? colors.surfacePressed : colors.surfaceRaised,
+          backgroundColor: pressed ? colors.surfacePressed : colors.glass,
           borderColor: colors.borderStrong,
           borderWidth: 1,
         },
         variant === 'ghost' && { backgroundColor: pressed ? colors.surfaceRaised : 'transparent' },
         variant === 'danger' && {
-          backgroundColor: pressed ? 'rgba(255,107,107,0.2)' : colors.dangerSoft,
-          borderColor: 'rgba(255,107,107,0.35)',
+          backgroundColor: pressed ? 'rgba(255,107,129,0.22)' : colors.dangerSoft,
+          borderColor: colors.dangerLine,
           borderWidth: 1,
         },
+        pressed && { transform: [{ scale: 0.98 }] },
         isDisabled && { opacity: 0.45 },
         style,
       ]}
       {...rest}
     >
-      {loading ? (
-        <ActivityIndicator color={fg} />
-      ) : (
+      {({ pressed }) => (
         <>
-          {icon && <Icon name={icon} size={18} color={fg} strokeWidth={2} />}
-          <Txt variant="bodyStrong" color={fg} style={{ fontFamily: 'InterTight_600SemiBold' }}>
-            {label}
-          </Txt>
+          {variant === 'primary' && (
+            <View style={[StyleSheet.absoluteFill, styles.buttonFill]}>
+              <GradientFill direction="horizontal" opacity={pressed ? 0.85 : 1} />
+            </View>
+          )}
+          {loading ? (
+            <ActivityIndicator color={fg} />
+          ) : (
+            <>
+              {icon && <Icon name={icon} size={18} color={fg} strokeWidth={2} />}
+              <Txt variant="bodyStrong" color={fg}>
+                {label}
+              </Txt>
+            </>
+          )}
         </>
       )}
     </Pressable>
   );
 }
 
-// ── Panel ────────────────────────────────────────────────────────────
+// ── Card ─────────────────────────────────────────────────────────────
 interface PanelProps {
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
-  /** Draws the HUD-style corner brackets in the given colour. */
-  bracket?: string;
+  /** Wraps the card in a 1.5px pink → violet → blue gradient edge. */
+  highlight?: boolean;
   onPress?: () => void;
   accessibilityLabel?: string;
 }
 
-export function Panel({ children, style, bracket, onPress, accessibilityLabel }: PanelProps) {
-  const content = (
-    <>
-      {bracket && <Brackets color={bracket} />}
+export function Panel({ children, style, highlight, onPress, accessibilityLabel }: PanelProps) {
+  const card = (pressed: boolean) => [styles.panel, pressed && { backgroundColor: colors.surfacePressed }, highlight && styles.panelInner, style];
+  const body = onPress ? (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      onPress={onPress}
+      style={({ pressed }) => [card(pressed), pressed && { transform: [{ scale: 0.99 }] }]}
+    >
       {children}
-    </>
+    </Pressable>
+  ) : (
+    <View style={card(false)} accessibilityLabel={accessibilityLabel}>
+      {children}
+    </View>
   );
-  if (onPress) {
-    return (
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel}
-        onPress={onPress}
-        style={({ pressed }) => [styles.panel, pressed && { backgroundColor: colors.surfacePressed }, style]}
-      >
-        {content}
-      </Pressable>
-    );
-  }
-  return <View style={[styles.panel, style]}>{content}</View>;
-}
-
-export function Brackets({ color, size = 12, inset = -1 }: { color: string; size?: number; inset?: number }) {
-  const b = { position: 'absolute' as const, width: size, height: size, borderColor: color };
+  if (!highlight) return body;
   return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      <View style={[b, { top: inset, left: inset, borderTopWidth: 2, borderLeftWidth: 2, borderTopLeftRadius: 4 }]} />
-      <View style={[b, { top: inset, right: inset, borderTopWidth: 2, borderRightWidth: 2, borderTopRightRadius: 4 }]} />
-      <View style={[b, { bottom: inset, left: inset, borderBottomWidth: 2, borderLeftWidth: 2, borderBottomLeftRadius: 4 }]} />
-      <View style={[b, { bottom: inset, right: inset, borderBottomWidth: 2, borderRightWidth: 2, borderBottomRightRadius: 4 }]} />
+    <View style={styles.panelEdge}>
+      <GradientFill />
+      {body}
     </View>
   );
 }
@@ -182,11 +196,12 @@ export function Brackets({ color, size = 12, inset = -1 }: { color: string; size
 // ── Progress ─────────────────────────────────────────────────────────
 export function ProgressBar({
   value,
-  color = colors.accent,
-  height = 6,
+  color,
+  height = 8,
   label,
 }: {
   value: number;
+  /** A solid colour; omit for the signature gradient. */
   color?: string;
   height?: number;
   label?: string;
@@ -200,7 +215,9 @@ export function ProgressBar({
       accessibilityValue={{ min: 0, max: 100, now: Math.round(pct * 100) }}
       style={[styles.track, { height, borderRadius: height / 2 }]}
     >
-      <View style={{ width: `${pct * 100}%`, height, borderRadius: height / 2, backgroundColor: color }} />
+      <View style={{ width: `${pct * 100}%`, height, borderRadius: height / 2, overflow: 'hidden', backgroundColor: color }}>
+        {!color && pct > 0 && <GradientFill direction="horizontal" />}
+      </View>
     </View>
   );
 }
@@ -230,7 +247,7 @@ export function Chip({
   label,
   selected,
   onPress,
-  color = colors.accent,
+  color = colors.text,
 }: {
   label: string;
   selected: boolean;
@@ -247,12 +264,10 @@ export function Chip({
         haptics.selection();
         onPress();
       }}
-      style={[
-        styles.chip,
-        selected ? { backgroundColor: colors.accentSoft, borderColor: color } : { borderColor: colors.border },
-      ]}
+      style={[styles.chip, selected ? styles.chipSelected : { borderColor: colors.border, backgroundColor: colors.surface }]}
     >
-      <Txt variant="small" color={selected ? color : colors.textMuted} style={{ fontFamily: 'InterTight_500Medium' }}>
+      {selected && <GradientFill direction="horizontal" opacity={0.28} />}
+      <Txt variant="small" color={selected ? color : colors.textMuted} style={{ fontFamily: fonts.semibold }}>
         {label}
       </Txt>
     </Pressable>
@@ -263,9 +278,14 @@ export function Chip({
 export function SectionHeader({ title, action }: { title: string; action?: ReactNode }) {
   return (
     <View style={styles.sectionHeader}>
-      <Txt variant="label" upper accessibilityRole="header">
-        {title}
-      </Txt>
+      <View style={styles.sectionTitle}>
+        <View style={styles.sectionTick}>
+          <GradientFill direction="vertical" />
+        </View>
+        <Txt variant="label" upper accessibilityRole="header" color={colors.textMuted}>
+          {title}
+        </Txt>
+      </View>
       {action}
     </View>
   );
@@ -293,7 +313,8 @@ export function EmptyState({ icon, title, body, action }: { icon: IconName; titl
   return (
     <View style={styles.empty}>
       <View style={styles.emptyIcon}>
-        <Icon name={icon} size={26} color={colors.accent} />
+        <GradientFill opacity={0.22} />
+        <Icon name={icon} size={28} color={colors.accent} />
       </View>
       <Txt variant="h3" align="center">
         {title}
@@ -308,10 +329,13 @@ export function EmptyState({ icon, title, body, action }: { icon: IconName; titl
 
 export function Notice({ tone = 'info', title, body }: { tone?: 'info' | 'warning' | 'danger'; title: string; body?: string }) {
   const c = tone === 'danger' ? colors.danger : tone === 'warning' ? colors.warning : colors.info;
-  const bg = tone === 'danger' ? colors.dangerSoft : tone === 'warning' ? colors.warningSoft : 'rgba(127,178,255,0.10)';
+  const bg = tone === 'danger' ? colors.dangerSoft : tone === 'warning' ? colors.warningSoft : colors.infoSoft;
+  const line = tone === 'danger' ? colors.dangerLine : tone === 'warning' ? colors.warningLine : colors.blueLine;
   return (
-    <View style={[styles.notice, { backgroundColor: bg, borderColor: c }]} accessibilityRole="alert">
-      <Icon name={tone === 'info' ? 'shield' : 'alert'} size={18} color={c} />
+    <View style={[styles.notice, { backgroundColor: bg, borderColor: line }]} accessibilityRole="alert">
+      <View style={[styles.noticeIcon, { borderColor: line }]}>
+        <Icon name={tone === 'info' ? 'shield' : 'alert'} size={16} color={c} />
+      </View>
       <View style={{ flex: 1, gap: 2 }}>
         <Txt variant="bodyStrong" color={c}>
           {title}
@@ -333,48 +357,57 @@ export function Divider() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  screenContent: { padding: space.lg, paddingBottom: 120, gap: space.lg },
+  screenContent: { padding: space.lg, paddingBottom: 140, gap: space.lg },
+  glowWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' },
   button: {
-    minHeight: 50,
-    borderRadius: radius.md,
-    paddingHorizontal: space.lg,
+    minHeight: 52,
+    borderRadius: radius.pill,
+    paddingHorizontal: space.xl,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: space.sm,
   },
-  buttonCompact: { minHeight: 40, paddingHorizontal: space.md },
+  buttonPrimary: { backgroundColor: colors.accent },
+  buttonFill: { borderRadius: radius.pill, overflow: 'hidden' },
+  buttonCompact: { minHeight: 40, paddingHorizontal: space.lg },
   panel: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glass,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
     padding: space.lg,
   },
-  track: { backgroundColor: colors.border, overflow: 'hidden', width: '100%' },
+  panelEdge: { borderRadius: radius.lg, padding: 1.5, overflow: 'hidden', ...shadow.card },
+  panelInner: { backgroundColor: colors.surface, borderWidth: 0, borderRadius: radius.lg - 1.5 },
+  track: { backgroundColor: colors.surfacePressed, overflow: 'hidden', width: '100%' },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     alignSelf: 'flex-start',
-    paddingHorizontal: 8,
+    paddingHorizontal: 9,
     paddingVertical: 4,
-    borderRadius: radius.sm,
+    borderRadius: radius.pill,
     borderWidth: 1,
   },
   dot: { width: 6, height: 6, borderRadius: 3 },
   chip: {
-    paddingHorizontal: 12,
-    minHeight: 34,
+    paddingHorizontal: 14,
+    minHeight: 36,
     justifyContent: 'center',
     borderRadius: radius.pill,
     borderWidth: 1,
+    overflow: 'hidden',
   },
+  chipSelected: { borderColor: colors.accentLine, backgroundColor: colors.surfaceRaised },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  sectionTitle: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  sectionTick: { width: 3, height: 14, borderRadius: 2, overflow: 'hidden' },
   statTile: {
     flex: 1,
     minWidth: 140,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glass,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
@@ -383,10 +416,12 @@ const styles = StyleSheet.create({
   },
   empty: { alignItems: 'center', gap: space.sm, paddingVertical: space.xxl },
   emptyIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.accentSoft,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.accentLine,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: space.sm,
@@ -398,5 +433,13 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     alignItems: 'flex-start',
+  },
+  noticeIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

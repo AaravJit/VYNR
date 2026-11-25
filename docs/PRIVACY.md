@@ -16,7 +16,7 @@ The app asks for camera permission only. It has no location permission (location
 
 ## What happens to a photo
 
-1. The camera capture is resized to at most 1024 px on the longest edge and re-encoded as JPEG at quality 0.7. This keeps enough detail to recognise a car's shape while making small text much harder to read.
+1. The camera capture is resized (see redaction below, which runs on this resized image before anything else) to at most 1024 px on the longest edge and re-encoded as JPEG at quality 0.7. This keeps enough detail to recognise a car's shape while making small text much harder to read.
 2. EXIF, GPS, XMP, ICC and comment segments are stripped by `stripJpegMetadata` as a second safeguard after the re-encode.
 3. The original full-resolution capture and the encoder's temporary file are deleted immediately.
 4. The prepared image stays in memory for the current scan only.
@@ -31,7 +31,7 @@ The AI provider (Anthropic) processes the image under its API terms. Check its c
 - The app never performs licence plate recognition. No OCR runs on the device or the server.
 - The server's instructions tell the model to identify make, model and generation only, and never to read, transcribe or mention plates, people, faces, addresses or locations. Text in the image is treated as scene content, not instructions.
 - Recognition responses are validated against a fixed schema, so free text can only appear in the short, length-capped `notes` field.
-- **Limitation:** plates and faces are not blurred before upload. Reliable on-device redaction needs a detection model, which is out of scope for this MVP. The mitigations are downscaling, no retention anywhere, and the model instructions. Adding on-device plate and face blurring is the top privacy item in TASKS.md.
+- **On-device redaction.** Before a photo is uploaded or kept, Google ML Kit face detection and text detection run on the phone (`src/services/redaction.ts`). Only bounding boxes are used: every recognised text string is discarded immediately and never stored or sent. Each face and text region is padded and pixelated in pure JavaScript (`src/services/pixelate.ts`), then metadata is stripped again. If detection cannot run, the photo is deleted and nothing is sent or kept (fail closed). ML Kit runs offline; Google states it may collect anonymous usage metrics, but images never leave the device for detection. Redaction needs a development or release build (it does not run in Expo Go) and has not yet been tested on a physical device.
 
 ## Credentials and abuse protection
 

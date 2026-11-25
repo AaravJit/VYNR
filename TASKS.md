@@ -17,6 +17,10 @@
 
 ## Needs the owner (external)
 
+- [ ] Let the build environment reach autodb.store (or add the AutoDB sample to the project) so the sample can be evaluated; then email AutoDB the licence question in docs/DATA_SOURCES.md before buying
+- [ ] Review-workflow setup in docs/PR_REVIEWS.md (API key secret, Actions approval permission, Claude GitHub App, branch protection)
+- [ ] Make a development build (`eas build --profile development`) to test on-device redaction, which does not run in Expo Go
+
 - [ ] Create an Anthropic API key, set a monthly spend limit, and deploy `server/` with HTTPS (docs/DEPLOYMENT.md)
 - [ ] Set `EXPO_PUBLIC_RECOGNITION_ENDPOINT` for release builds
 - [ ] Apple Developer and Google Play accounts; confirm the bundle id `com.aaravjit.vynr`
@@ -29,7 +33,7 @@
 
 Priority order:
 
-1. **On-device plate and face blurring** before upload (for example a small detection model through a native module). Highest privacy value.
+1. ~~On-device plate and face blurring~~ Done in Phase 2 (ML Kit detection + JS pixelation, fail closed). Needs a device test in a development build.
 2. **Device attestation** (App Attest, Play Integrity) on recognition requests, replacing the anonymous install id as the abuse boundary.
 3. **Shared rate-limit store** (Redis or similar) so the server can run more than one instance. Counters already survive restarts on a single instance.
 4. **Identification integrity for multiplayer**: server-verified sightings before any leaderboard. Today, manual picks are trusted.

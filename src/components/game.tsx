@@ -7,6 +7,7 @@ import type { CatalogVehicle, Contract } from '@/domain/types';
 import { recognitionConfig } from '@/state/AppProvider';
 import { colors, radius, rarityColors, space } from '@/theme/tokens';
 
+import { GradientFill, Ring } from './Gradient';
 import { Icon } from './Icon';
 import { Panel, ProgressBar, RarityBadge, Txt } from './ui';
 
@@ -34,10 +35,16 @@ export function VehicleEmblem({ vehicle, size = 56, locked }: { vehicle: Catalog
       importantForAccessibility="no"
       accessibilityElementsHidden
     >
+      {!locked && <GradientFill colors={[c.soft, 'rgba(11,7,22,0)']} direction="diagonal" />}
+      {!locked && <View style={[styles.emblemShine, { backgroundColor: c.fg }]} />}
       {locked ? (
         <Icon name="lock" size={size * 0.36} color={colors.textFaint} />
       ) : (
-        <Txt variant="h3" color={c.fg} style={{ fontSize: size * 0.32, lineHeight: size * 0.38 }}>
+        <Txt
+          variant="h2"
+          color={c.fg}
+          style={{ fontSize: size * 0.3, lineHeight: size * 0.38, fontFamily: 'Unbounded_800ExtraBold' }}
+        >
           {initials}
         </Txt>
       )}
@@ -84,32 +91,36 @@ export function VehicleRow({
 }
 
 export function LevelPanel({ level, username }: { level: LevelInfo; username: string }) {
+  const ring = 104;
   return (
-    <Panel bracket={colors.accentLine} style={{ gap: space.md }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+    <Panel highlight style={styles.level}>
+      <View style={{ width: ring, height: ring, alignItems: 'center', justifyContent: 'center' }}>
+        <Ring size={ring} stroke={9} progress={level.progress} trackColor={colors.surfacePressed} />
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <View style={styles.levelCenter}>
+            <Txt variant="label" upper color={colors.textMuted}>
+              Lvl
+            </Txt>
+            <Txt variant="display" accessibilityLabel={`Level ${level.level}`} style={{ fontSize: 28, lineHeight: 32 }}>
+              {String(level.level).padStart(2, '0')}
+            </Txt>
+          </View>
+        </View>
+      </View>
+      <View style={{ flex: 1, gap: space.sm }}>
         <View style={{ gap: 2 }}>
-          <Txt variant="label" upper>
-            Operator
+          <Txt variant="label" upper color={colors.accent}>
+            Spotter
           </Txt>
           <Txt variant="h2" numberOfLines={1}>
             {username}
           </Txt>
         </View>
-        <View style={{ alignItems: 'flex-end' }}>
-          <Txt variant="label" upper>
-            Level
-          </Txt>
-          <Txt variant="display" color={colors.accent} accessibilityLabel={`Level ${level.level}`}>
-            {String(level.level).padStart(2, '0')}
-          </Txt>
-        </View>
-      </View>
-      <ProgressBar value={level.progress} label="Progress to next level" />
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <ProgressBar value={level.progress} label="Progress to next level" height={6} />
         <Txt variant="mono" color={colors.textMuted}>
           {level.totalXp.toLocaleString()} XP
         </Txt>
-        <Txt variant="mono" color={colors.textMuted}>
+        <Txt variant="small" color={colors.textFaint}>
           {level.isMax ? 'MAX LEVEL' : `${(level.xpForNext - level.xpIntoLevel).toLocaleString()} XP to L${level.level + 1}`}
         </Txt>
       </View>
@@ -122,22 +133,24 @@ export function ContractCard({ contract }: { contract: Contract }) {
   const title = describeContract(contract, catalog);
   return (
     <Panel
-      style={[styles.contract, done && { borderColor: colors.accentLine }]}
+      highlight={done}
+      style={styles.contract}
       accessibilityLabel={`${title}. ${done ? 'Completed' : `${contract.progress} of ${contract.target}`}. Reward ${contract.rewardXp} XP`}
     >
-      <View style={[styles.contractIcon, done && { backgroundColor: colors.accent }]}>
+      <View style={styles.contractIcon}>
+        <GradientFill opacity={done ? 1 : 0.2} />
         <Icon name={done ? 'check' : 'contracts'} size={18} color={done ? colors.accentInk : colors.accent} />
       </View>
       <View style={{ flex: 1, gap: 6 }}>
         <Txt variant="bodyStrong" color={done ? colors.textMuted : colors.text}>
           {title}
         </Txt>
-        <ProgressBar value={contract.progress / contract.target} color={done ? colors.accent : colors.accent} height={4} />
+        <ProgressBar value={contract.progress / contract.target} height={6} />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <Txt variant="mono" color={colors.textMuted}>
             {done ? 'COMPLETE' : `${contract.progress}/${contract.target}`}
           </Txt>
-          <Txt variant="mono" color={colors.accent}>
+          <Txt variant="mono" color={colors.violet}>
             +{contract.rewardXp} XP
           </Txt>
         </View>
@@ -160,14 +173,19 @@ export function DevModeBanner() {
 }
 
 const styles = StyleSheet.create({
-  emblem: { borderRadius: radius.md, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  emblem: { borderRadius: radius.md, borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  emblemShine: { position: 'absolute', top: 0, left: '20%', right: '20%', height: 2, borderRadius: 1, opacity: 0.8 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md },
+  level: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
+  levelCenter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   contract: { flexDirection: 'row', gap: space.md, alignItems: 'flex-start' },
   contractIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.accentSoft,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.accentLine,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -178,9 +196,9 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: radius.sm,
+    borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: 'rgba(255,193,69,0.45)',
+    borderColor: colors.warningLine,
     backgroundColor: colors.warningSoft,
   },
 });

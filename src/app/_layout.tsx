@@ -3,6 +3,8 @@ import { InterTight_500Medium } from '@expo-google-fonts/inter-tight/500Medium';
 import { InterTight_600SemiBold } from '@expo-google-fonts/inter-tight/600SemiBold';
 import { InterTight_700Bold } from '@expo-google-fonts/inter-tight/700Bold';
 import { JetBrainsMono_500Medium } from '@expo-google-fonts/jetbrains-mono/500Medium';
+import { Unbounded_600SemiBold } from '@expo-google-fonts/unbounded/600SemiBold';
+import { Unbounded_800ExtraBold } from '@expo-google-fonts/unbounded/800ExtraBold';
 import { useFonts } from 'expo-font';
 import { type ErrorBoundaryProps, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -45,6 +47,8 @@ function RootNavigator() {
     InterTight_600SemiBold,
     InterTight_700Bold,
     JetBrainsMono_500Medium,
+    Unbounded_600SemiBold,
+    Unbounded_800ExtraBold,
   });
   const fontsReady = fontsLoaded || !!fontError;
   const ready = fontsReady && state.status !== 'loading';
@@ -83,7 +87,7 @@ function RootNavigator() {
       </Stack.Protected>
       <Stack.Protected guard={onboarded}>
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+        <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="identify" options={{ animation: 'slide_from_right', gestureEnabled: false }} />
         <Stack.Screen name="catalog-picker" options={{ presentation: 'modal' }} />
         <Stack.Screen name="discovery/[encounterId]" options={{ animation: 'fade', gestureEnabled: false }} />
