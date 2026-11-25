@@ -106,7 +106,7 @@ export default function VehicleDetail() {
           icon="lock"
           title="Not discovered yet"
           body="Find and photograph this vehicle to unlock its record."
-          action={<Button label="Open scanner" icon="scan" onPress={() => router.push('/scan')} />}
+          action={<Button label="Open scanner" icon="scan" onPress={() => router.navigate('/')} />}
         />
       )}
     </Screen>

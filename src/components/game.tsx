@@ -89,7 +89,7 @@ export function LevelPanel({ level, username }: { level: LevelInfo; username: st
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <View style={{ gap: 2 }}>
           <Txt variant="label" upper>
-            Operator
+            Spotter
           </Txt>
           <Txt variant="h2" numberOfLines={1}>
             {username}
@@ -100,7 +100,7 @@ export function LevelPanel({ level, username }: { level: LevelInfo; username: st
             Level
           </Txt>
           <Txt variant="display" color={colors.accent} accessibilityLabel={`Level ${level.level}`}>
-            {String(level.level).padStart(2, '0')}
+            {level.level}
           </Txt>
         </View>
       </View>
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: 'rgba(255,193,69,0.45)',
+    borderColor: colors.warningLine,
     backgroundColor: colors.warningSoft,
   },
 });

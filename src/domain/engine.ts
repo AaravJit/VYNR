@@ -16,6 +16,7 @@ import type {
   LedgerEntry,
   XpLineItem,
 } from './types';
+import type { VehicleIntel } from './intel';
 
 export interface EncounterInput {
   vehicleId: string | null;
@@ -24,6 +25,8 @@ export interface EncounterInput {
   confidence: number | null;
   provider: string | null;
   photoUri: string | null;
+  /** Simulated intel shown on the report, stored with the encounter so it never changes. */
+  intel?: VehicleIntel | null;
   now: number;
 }
 
@@ -119,6 +122,7 @@ export function applyEncounter(
     encounterIndex,
     isFirstDiscovery: Boolean(vehicle) && encounterIndex === 0,
     photoUri: input.photoUri,
+    intel: vehicle ? (input.intel ?? null) : null,
     createdAt: now,
   };
   const label = vehicle

@@ -8,6 +8,7 @@ import type {
   LedgerEntry,
 } from '@/domain/types';
 import type { EncounterOutcome } from '@/domain/engine';
+import { parseIntel } from '@/domain/intel';
 
 import type { SqlDriver } from './driver';
 import { LATEST_SCHEMA_VERSION } from './migrations';
@@ -21,6 +22,8 @@ export interface Player {
 
 export interface Settings {
   hapticsEnabled: boolean;
+  /** Short discovery sounds. Respects the iOS silent switch. */
+  soundEnabled: boolean;
   keepPhotos: boolean;
   /** Consent to send captured photos to the recognition service. */
   cloudRecognitionConsent: boolean;
@@ -29,6 +32,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   hapticsEnabled: true,
+  soundEnabled: true,
   keepPhotos: false,
   cloudRecognitionConsent: false,
   safetyAcknowledged: false,
@@ -45,6 +49,7 @@ interface EncounterRow {
   encounter_index: number;
   is_first: number;
   photo_uri: string | null;
+  intel: string | null;
   created_at: number;
 }
 
@@ -71,6 +76,7 @@ const toEncounter = (r: EncounterRow): EncounterRecord => ({
   encounterIndex: r.encounter_index,
   isFirstDiscovery: r.is_first === 1,
   photoUri: r.photo_uri,
+  intel: parseIntel(r.intel),
   createdAt: r.created_at,
 });
 
@@ -203,8 +209,8 @@ export class GameRepository {
     await this.db.transaction(async (tx) => {
       const e = outcome.encounter;
       await tx.run(
-        `INSERT INTO encounters (id, vehicle_id, label, source, confidence, provider, xp_awarded, encounter_index, is_first, photo_uri, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO encounters (id, vehicle_id, label, source, confidence, provider, xp_awarded, encounter_index, is_first, photo_uri, intel, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           e.id,
           e.vehicleId,
@@ -216,6 +222,7 @@ export class GameRepository {
           e.encounterIndex,
           e.isFirstDiscovery ? 1 : 0,
           e.photoUri,
+          e.intel ? JSON.stringify(e.intel) : null,
           e.createdAt,
         ],
       );

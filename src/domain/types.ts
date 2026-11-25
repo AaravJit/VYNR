@@ -1,3 +1,5 @@
+import type { VehicleIntel } from './intel';
+
 /**
  * Core domain types for VYNR. This module is pure TypeScript with no React Native
  * imports so it can be unit tested deterministically and reused by a future
@@ -74,6 +76,8 @@ export interface EncounterRecord {
   encounterIndex: number;
   isFirstDiscovery: boolean;
   photoUri: string | null;
+  /** Simulated entertainment intel (see domain/intel.ts), fixed at registration. Null for field notes and pre-v2 records. */
+  intel: VehicleIntel | null;
   createdAt: number;
 }
 

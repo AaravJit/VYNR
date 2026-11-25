@@ -146,7 +146,7 @@ export default function Discovery() {
         </>
       )}
 
-      <Button label="Scan another" icon="scan" onPress={() => router.replace('/scan')} />
+      <Button label="Scan another" icon="scan" onPress={() => router.dismissTo('/')} />
       {vehicle && (
         <Button
           label="View in garage"

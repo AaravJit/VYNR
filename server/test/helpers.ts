@@ -3,7 +3,8 @@ import type { AddressInfo } from 'node:net';
 
 import { createApp, type AppDeps } from '../src/app.ts';
 import { loadConfig, type ServerConfig } from '../src/config.ts';
-import type { VisionProvider } from '../src/providers/types.ts';
+import { QuotaStore } from '../src/store.ts';
+import type { Identification, VisionProvider } from '../src/providers/types.ts';
 import type { RecognitionResponse } from '../src/shared/types.ts';
 
 /** Minimal JPEG byte stream with an EXIF/GPS segment, a table and scan data. */
@@ -23,11 +24,15 @@ export const okResult: RecognitionResponse = {
 
 export class FakeProvider implements VisionProvider {
   readonly id = 'fake';
+  worstCaseMicros = 1000;
+  /** Cost reported per successful call, in micro-dollars. */
+  costPerCall = 400;
   calls: Uint8Array[] = [];
   impl: (signal: AbortSignal) => Promise<RecognitionResponse> = async () => okResult;
-  async identify(image: { jpeg: Uint8Array }, signal: AbortSignal) {
+  async identify(image: { jpeg: Uint8Array }, signal: AbortSignal): Promise<Identification> {
     this.calls.push(image.jpeg);
-    return this.impl(signal);
+    const response = await this.impl(signal);
+    return { response, calls: [{ model: 'fake', inputTokens: 1000, outputTokens: 100, costMicros: this.costPerCall }] };
   }
 }
 
@@ -36,16 +41,18 @@ export interface Harness {
   provider: FakeProvider;
   logs: string[];
   clock: { t: number; now(): number };
+  store: QuotaStore;
   close(): Promise<void>;
   post(body: unknown, headers?: Record<string, string>): Promise<Response>;
 }
 
 export async function startServer(overrides: Partial<ServerConfig> = {}, deps: Partial<AppDeps> = {}): Promise<Harness> {
-  const config = { ...loadConfig({}), ...overrides };
+  const config = { ...loadConfig({}), stateFile: ':memory:', ...overrides };
   const provider = new FakeProvider();
   const logs: string[] = [];
   const clock = { t: Date.UTC(2026, 10, 25, 12), now: () => clock.t };
-  const app = createApp({ config, provider, clock, log: (l) => logs.push(l), ...deps });
+  const store = deps.store ?? new QuotaStore(config.stateFile);
+  const app = createApp({ config, provider, clock, log: (l) => logs.push(l), ...deps, store });
   const server: Server = createServer((req, res) => void app.handle(req, res));
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
   const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
@@ -54,10 +61,14 @@ export async function startServer(overrides: Partial<ServerConfig> = {}, deps: P
     provider,
     logs,
     clock,
+    store,
     close: () =>
       new Promise((r) => {
         server.closeAllConnections();
-        server.close(() => r());
+        server.close(() => {
+          store.close();
+          r();
+        });
       }),
     post: (body, headers = {}) =>
       fetch(`${url}/v1/recognize`, {
@@ -66,6 +77,13 @@ export async function startServer(overrides: Partial<ServerConfig> = {}, deps: P
         body: typeof body === 'string' ? body : JSON.stringify(body),
       }),
   };
+}
+
+/** A distinct valid JPEG per call, so deduplication does not hide repeated requests in tests. */
+let unique = 0;
+export function uniqueImageBody() {
+  unique++;
+  return imageBody(jpegWithExif(unique));
 }
 
 export function imageBody(bytes: Uint8Array = jpegWithExif()) {

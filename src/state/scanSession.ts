@@ -1,5 +1,6 @@
 import type { EncounterOutcome } from '@/domain/engine';
 import type { PreparedImage, RecognitionResult } from '@/recognition/types';
+import type { RedactionSummary } from '@/services/imageService';
 
 /**
  * The in-flight scan lives only in memory: the photo is never written to disk
@@ -9,6 +10,8 @@ export interface ScanSession {
   id: string;
   image: PreparedImage | null;
   previewUri: string | null;
+  /** Whether faces and plates were pixelated on device. Null for simulated captures (no photo). */
+  redaction: RedactionSummary | null;
   result: RecognitionResult | null;
   /** Vehicle chosen manually from the catalog picker, overriding the prediction. */
   manualVehicleId?: string | null;

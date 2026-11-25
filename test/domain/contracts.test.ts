@@ -17,6 +17,7 @@ const enc = (id: string, vehicleId: string | null, createdAt: number, extra: Par
   encounterIndex: 0,
   isFirstDiscovery: true,
   photoUri: null,
+  intel: null,
   createdAt,
   ...extra,
 });

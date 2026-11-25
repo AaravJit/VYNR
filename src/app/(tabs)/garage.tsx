@@ -205,7 +205,7 @@ export default function Garage() {
               icon="garage"
               title="Your garage is empty"
               body="Every vehicle you identify is stored here with its full encounter history."
-              action={<Button label="Scan a vehicle" icon="scan" onPress={() => router.push('/scan')} />}
+              action={<Button label="Scan a vehicle" icon="scan" onPress={() => router.navigate('/')} />}
             />
           ) : (
             <EmptyState

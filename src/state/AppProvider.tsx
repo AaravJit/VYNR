@@ -10,7 +10,7 @@ import { appRecognitionConfig, type RecognitionConfig } from '@/recognition/conf
 import { MockRecognitionProvider } from '@/recognition/mockProvider';
 import { RemoteRecognitionProvider } from '@/recognition/remoteProvider';
 import type { RecognitionProvider } from '@/recognition/types';
-import { deleteAllPhotos } from '@/services/imageService';
+import { deleteAllPhotos, deleteFileQuietly } from '@/services/imageService';
 
 import { AppStore, type AppState } from './appStore';
 
@@ -23,6 +23,7 @@ export function createAppStore(): AppStore {
     config: GAME_CONFIG,
     newId: () => Crypto.randomUUID(),
     deletePhotos: deleteAllPhotos,
+    deletePhoto: deleteFileQuietly,
   });
 }
 

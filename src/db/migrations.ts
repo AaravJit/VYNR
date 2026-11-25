@@ -71,6 +71,13 @@ export const MIGRATIONS: { version: number; name: string; sql: string }[] = [
       );
     `,
   },
+  {
+    version: 2,
+    name: 'simulated intel on encounters',
+    sql: `
+      ALTER TABLE encounters ADD COLUMN intel TEXT;
+    `,
+  },
 ];
 
 export const LATEST_SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1]!.version;

@@ -2,7 +2,6 @@ import { InterTight_400Regular } from '@expo-google-fonts/inter-tight/400Regular
 import { InterTight_500Medium } from '@expo-google-fonts/inter-tight/500Medium';
 import { InterTight_600SemiBold } from '@expo-google-fonts/inter-tight/600SemiBold';
 import { InterTight_700Bold } from '@expo-google-fonts/inter-tight/700Bold';
-import { JetBrainsMono_500Medium } from '@expo-google-fonts/jetbrains-mono/500Medium';
 import { useFonts } from 'expo-font';
 import { type ErrorBoundaryProps, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -23,7 +22,7 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   return (
     <View style={styles.center}>
       <Txt variant="label" color={colors.danger} upper>
-        System fault
+        Something broke
       </Txt>
       <Txt variant="h2" align="center">
         Something went wrong
@@ -44,7 +43,6 @@ function RootNavigator() {
     InterTight_500Medium,
     InterTight_600SemiBold,
     InterTight_700Bold,
-    JetBrainsMono_500Medium,
   });
   const fontsReady = fontsLoaded || !!fontError;
   const ready = fontsReady && state.status !== 'loading';
@@ -75,7 +73,7 @@ function RootNavigator() {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: colors.bg },
-        animation: 'fade_from_bottom',
+        animation: 'fade',
       }}
     >
       <Stack.Protected guard={!onboarded}>
@@ -83,12 +81,12 @@ function RootNavigator() {
       </Stack.Protected>
       <Stack.Protected guard={onboarded}>
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
         <Stack.Screen name="identify" options={{ animation: 'slide_from_right', gestureEnabled: false }} />
         <Stack.Screen name="catalog-picker" options={{ presentation: 'modal' }} />
         <Stack.Screen name="discovery/[encounterId]" options={{ animation: 'fade', gestureEnabled: false }} />
         <Stack.Screen name="vehicle/[vehicleId]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="privacy" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="contracts" options={{ animation: 'slide_from_right' }} />
       </Stack.Protected>
     </Stack>
   );

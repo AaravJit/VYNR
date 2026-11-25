@@ -191,7 +191,7 @@ export default function Identify() {
           icon="alert"
           title="This scan has expired"
           body="Scans are kept in memory only. Take a new photo to continue."
-          action={<Button label="Open scanner" icon="scan" onPress={() => router.replace('/scan')} />}
+          action={<Button label="Open scanner" icon="scan" onPress={() => router.dismissTo('/')} />}
         />
       </Screen>
     );
@@ -286,7 +286,7 @@ export default function Identify() {
             title="No vehicle detected"
             body={session.result.notes ?? 'Try again with the whole vehicle in frame and good lighting.'}
           />
-          <Button label="Retake photo" icon="scan" onPress={() => router.replace('/scan')} />
+          <Button label="Retake photo" icon="scan" onPress={() => router.dismissTo('/')} />
           <Button label="Identify manually" variant="secondary" onPress={openPicker} />
         </>
       )}

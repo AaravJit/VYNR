@@ -104,7 +104,7 @@ export function Button({ label, variant = 'primary', icon, loading, disabled, on
       style={({ pressed }) => [
         styles.button,
         compact && styles.buttonCompact,
-        variant === 'primary' && { backgroundColor: pressed ? '#B3EC2C' : colors.accent },
+        variant === 'primary' && { backgroundColor: colors.accent, opacity: pressed ? 0.85 : 1 },
         variant === 'secondary' && {
           backgroundColor: pressed ? colors.surfacePressed : colors.surfaceRaised,
           borderColor: colors.borderStrong,
@@ -112,8 +112,8 @@ export function Button({ label, variant = 'primary', icon, loading, disabled, on
         },
         variant === 'ghost' && { backgroundColor: pressed ? colors.surfaceRaised : 'transparent' },
         variant === 'danger' && {
-          backgroundColor: pressed ? 'rgba(255,107,107,0.2)' : colors.dangerSoft,
-          borderColor: 'rgba(255,107,107,0.35)',
+          backgroundColor: pressed ? colors.surfacePressed : colors.dangerSoft,
+          borderColor: colors.dangerLine,
           borderWidth: 1,
         },
         isDisabled && { opacity: 0.45 },
@@ -167,16 +167,9 @@ export function Panel({ children, style, bracket, onPress, accessibilityLabel }:
   return <View style={[styles.panel, style]}>{content}</View>;
 }
 
-export function Brackets({ color, size = 12, inset = -1 }: { color: string; size?: number; inset?: number }) {
-  const b = { position: 'absolute' as const, width: size, height: size, borderColor: color };
-  return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      <View style={[b, { top: inset, left: inset, borderTopWidth: 2, borderLeftWidth: 2, borderTopLeftRadius: 4 }]} />
-      <View style={[b, { top: inset, right: inset, borderTopWidth: 2, borderRightWidth: 2, borderTopRightRadius: 4 }]} />
-      <View style={[b, { bottom: inset, left: inset, borderBottomWidth: 2, borderLeftWidth: 2, borderBottomLeftRadius: 4 }]} />
-      <View style={[b, { bottom: inset, right: inset, borderBottomWidth: 2, borderRightWidth: 2, borderBottomRightRadius: 4 }]} />
-    </View>
-  );
+/** Highlights a panel with a thin brand-coloured outline (replaces the old HUD corner brackets). */
+export function Brackets({ color }: { color: string; size?: number; inset?: number }) {
+  return <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius.lg, borderWidth: 1, borderColor: color }]} />;
 }
 
 // ── Progress ─────────────────────────────────────────────────────────
@@ -308,7 +301,7 @@ export function EmptyState({ icon, title, body, action }: { icon: IconName; titl
 
 export function Notice({ tone = 'info', title, body }: { tone?: 'info' | 'warning' | 'danger'; title: string; body?: string }) {
   const c = tone === 'danger' ? colors.danger : tone === 'warning' ? colors.warning : colors.info;
-  const bg = tone === 'danger' ? colors.dangerSoft : tone === 'warning' ? colors.warningSoft : 'rgba(127,178,255,0.10)';
+  const bg = tone === 'danger' ? colors.dangerSoft : tone === 'warning' ? colors.warningSoft : colors.infoSoft;
   return (
     <View style={[styles.notice, { backgroundColor: bg, borderColor: c }]} accessibilityRole="alert">
       <Icon name={tone === 'info' ? 'shield' : 'alert'} size={18} color={c} />
@@ -326,6 +319,25 @@ export function Notice({ tone = 'info', title, body }: { tone?: 'info' | 'warnin
   );
 }
 
+/** Compact header for pushed screens: back button and a small title. */
+export function BackHeader({ title, onBack, right }: { title?: string; onBack: () => void; right?: ReactNode }) {
+  return (
+    <View style={styles.backHeader}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={onBack} style={styles.backBtn} hitSlop={8}>
+        <Icon name="chevron-left" size={22} />
+      </Pressable>
+      {title ? (
+        <Txt variant="h3" numberOfLines={1} style={{ flex: 1, textAlign: 'center' }}>
+          {title}
+        </Txt>
+      ) : (
+        <View style={{ flex: 1 }} />
+      )}
+      {right ?? <View style={{ width: 40 }} />}
+    </View>
+  );
+}
+
 export function Divider() {
   return <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border }} />;
 }
@@ -334,9 +346,18 @@ export function Divider() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   screenContent: { padding: space.lg, paddingBottom: 120, gap: space.lg },
+  backHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.md, paddingVertical: space.xs, gap: space.sm },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surfaceRaised,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   button: {
-    minHeight: 50,
-    borderRadius: radius.md,
+    minHeight: 52,
+    borderRadius: radius.pill,
     paddingHorizontal: space.lg,
     flexDirection: 'row',
     alignItems: 'center',
@@ -359,7 +380,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: radius.sm,
+    borderRadius: radius.pill,
     borderWidth: 1,
   },
   dot: { width: 6, height: 6, borderRadius: 3 },

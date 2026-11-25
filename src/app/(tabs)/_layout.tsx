@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { type BottomTabBarProps, Tabs } from 'expo-router/js-tabs';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,75 +5,57 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from '@/components/Icon';
 import { Txt } from '@/components/ui';
 import { useHaptics } from '@/state/AppProvider';
-import { colors, radius, space } from '@/theme/tokens';
+import { colors, layout, radius, space } from '@/theme/tokens';
 
 const TABS: { name: string; label: string; icon: IconName }[] = [
-  { name: 'index', label: 'Home', icon: 'home' },
+  { name: 'index', label: 'Scan', icon: 'scan' },
   { name: 'garage', label: 'Garage', icon: 'garage' },
-  { name: 'contracts', label: 'Contracts', icon: 'contracts' },
+  { name: 'career', label: 'Career', icon: 'contracts' },
   { name: 'profile', label: 'Profile', icon: 'profile' },
 ];
 
-/** Custom tab bar with a raised scanner trigger in the centre. */
+/** Floating translucent tab bar. It sits over the camera on the scanner, so it stays compact and quiet. */
 function VynrTabBar({ state, navigateToTab }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const haptics = useHaptics();
-  const renderTab = (index: number) => {
-    const route = state.routes[index];
-    const tab = TABS.find((t) => t.name === route?.name);
-    if (!route || !tab) return null;
-    const focused = state.index === index;
-    return (
-      <Pressable
-        key={route.key}
-        accessibilityRole="tab"
-        accessibilityState={{ selected: focused }}
-        accessibilityLabel={tab.label}
-        onPress={() => {
-          if (!focused) {
-            haptics.selection();
-            navigateToTab(route.key);
-          }
-        }}
-        style={styles.tab}
-      >
-        <Icon name={tab.icon} size={22} color={focused ? colors.accent : colors.textFaint} />
-        <Txt variant="label" color={focused ? colors.text : colors.textFaint} style={{ fontSize: 10 }}>
-          {tab.label.toUpperCase()}
-        </Txt>
-      </Pressable>
-    );
-  };
   return (
-    <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, space.sm) }]}>
-      {renderTab(0)}
-      {renderTab(1)}
-      <View style={styles.scanSlot}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Open scanner"
-          accessibilityHint="Opens the camera to photograph a vehicle"
-          onPress={() => {
-            haptics.impact();
-            router.push('/scan');
-          }}
-          style={({ pressed }) => [styles.scanButton, pressed && { transform: [{ scale: 0.95 }] }]}
-        >
-          <Icon name="scan" size={28} color={colors.accentInk} strokeWidth={2.2} />
-        </Pressable>
+    <View pointerEvents="box-none" style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, space.sm) }]}>
+      <View style={styles.bar} accessibilityRole="tablist">
+        {state.routes.map((route, index) => {
+          const tab = TABS.find((t) => t.name === route.name);
+          if (!tab) return null;
+          const focused = state.index === index;
+          return (
+            <Pressable
+              key={route.key}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: focused }}
+              accessibilityLabel={tab.label}
+              onPress={() => {
+                if (!focused) {
+                  haptics.selection();
+                  navigateToTab(route.key);
+                }
+              }}
+              style={[styles.tab, focused && styles.tabFocused]}
+            >
+              <Icon name={tab.icon} size={20} color={focused ? colors.text : colors.textFaint} strokeWidth={focused ? 2 : 1.75} />
+              {focused && (
+                <Txt variant="label" color={colors.text} style={{ fontSize: 11, letterSpacing: 0.4 }}>
+                  {tab.label}
+                </Txt>
+              )}
+            </Pressable>
+          );
+        })}
       </View>
-      {renderTab(2)}
-      {renderTab(3)}
     </View>
   );
 }
 
 export default function TabLayout() {
   return (
-    <Tabs
-      tabBar={(props) => <VynrTabBar {...props} />}
-      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg } }}
-    >
+    <Tabs tabBar={(props) => <VynrTabBar {...props} />} screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg } }}>
       {TABS.map((t) => (
         <Tabs.Screen key={t.name} name={t.name} options={{ title: t.label }} />
       ))}
@@ -83,30 +64,27 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
+  wrap: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center' },
   bar: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    backgroundColor: 'rgba(10,11,13,0.97)',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-    paddingTop: space.sm,
-  },
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4, minHeight: 48 },
-  scanSlot: { width: 84, alignItems: 'center' },
-  scanButton: {
-    width: 62,
-    height: 62,
+    alignItems: 'center',
+    height: layout.tabBarHeight - 8,
+    paddingHorizontal: 6,
+    gap: 2,
     borderRadius: radius.pill,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.glassStrong,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.glassBorder,
+  },
+  tab: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -26,
-    borderWidth: 4,
-    borderColor: colors.bg,
-    shadowColor: colors.accent,
-    shadowOpacity: 0.35,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 8,
+    gap: 6,
+    minWidth: 52,
+    height: 44,
+    paddingHorizontal: 14,
+    borderRadius: radius.pill,
   },
+  tabFocused: { backgroundColor: 'rgba(255,255,255,0.10)' },
 });

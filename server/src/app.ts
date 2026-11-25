@@ -1,9 +1,12 @@
+import { createHash } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
 import type { ServerConfig } from './config.ts';
-import { type Clock, DailyBudget, Semaphore, systemClock, WindowLimiter } from './limits.ts';
-import { UpstreamError, type VisionProvider } from './providers/types.ts';
-import { INSTALL_ID_PATTERN, parseRecognizeRequest, RequestError } from './validation.ts';
+import { type Clock, Semaphore, systemClock } from './limits.ts';
+import { type Identification, UpstreamError, type VisionProvider } from './providers/types.ts';
+import type { RecognitionResponse } from './shared/types.ts';
+import { QuotaStore } from './store.ts';
+import { INSTALL_ID_PATTERN, parseRecognizeRequest, RequestError, type ValidImage } from './validation.ts';
 
 export type Logger = (line: string) => void;
 
@@ -12,6 +15,8 @@ export interface AppDeps {
   provider: VisionProvider;
   clock?: Clock;
   log?: Logger;
+  /** Persistent counters. Defaults to a SQLite file at config.stateFile. */
+  store?: QuotaStore;
 }
 
 const MINUTE = 60_000;
@@ -79,26 +84,61 @@ function clientIp(req: IncomingMessage, trustProxy: boolean): string {
 }
 
 /**
- * Creates the request handler. Stateless apart from in-memory rate-limit
- * counters. Images are held in memory only for the duration of the request and
- * are never written to disk or logged.
+ * Creates the request handler. Rate limits, request and spend ceilings, and the
+ * result cache persist in SQLite. Images are held in memory only for the
+ * duration of the request and are never written to disk or logged; the cache
+ * stores only a SHA-256 of the (already redacted) image and the JSON answer.
  */
 export function createApp(deps: AppDeps) {
   const { config, provider } = deps;
   const clock = deps.clock ?? systemClock;
   const log = deps.log ?? ((line: string) => console.log(line));
+  const store = deps.store ?? new QuotaStore(config.stateFile);
 
-  const installMinute = new WindowLimiter(config.perInstallPerMinute, MINUTE, clock);
-  const installDay = new WindowLimiter(config.perInstallPerDay, DAY, clock);
-  const ipMinute = new WindowLimiter(config.perIpPerMinute, MINUTE, clock);
-  const ipDay = new WindowLimiter(config.perIpPerDay, DAY, clock);
-  const budget = new DailyBudget(config.globalDailyBudget, clock);
   const concurrency = new Semaphore(config.maxConcurrent);
+  // Identical photos in flight share one model call instead of paying twice.
+  const inflight = new Map<string, Promise<Identification>>();
   // Base64 inflates by 4/3; allow a little room for the JSON wrapper.
   const maxBodyBytes = Math.ceil((config.maxImageBytes * 4) / 3) + 1024;
+  const limits = {
+    dailyRequests: config.globalDailyBudget,
+    dailySpendMicros: Math.round(config.dailySpendUsd * 1e6),
+    monthlySpendMicros: Math.round(config.monthlySpendUsd * 1e6),
+  };
 
   function sweep(): void {
-    for (const l of [installMinute, installDay, ipMinute, ipDay]) l.sweep();
+    store.sweep(clock.now(), DAY);
+  }
+
+  /** Calls the provider under the spend reservation, timeout and client-disconnect cancellation. */
+  async function callProvider(image: ValidImage, res: ServerResponse): Promise<Identification> {
+    const reservation = store.reserve(clock.now(), provider.worstCaseMicros, limits);
+    if (!reservation.ok) {
+      log(`WARN recognition ceiling reached (${reservation.reason})`);
+      throw new RequestError(503, 'daily_budget_exhausted', reservation.reason);
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), config.upstreamTimeoutMs);
+    const onClose = () => {
+      if (!res.writableEnded) controller.abort();
+    };
+    res.on('close', onClose);
+    let actual = 0;
+    try {
+      const result = await provider.identify(image, controller.signal);
+      actual = result.calls.reduce((a, c) => a + c.costMicros, 0);
+      return result;
+    } catch (err) {
+      if (err instanceof UpstreamError) {
+        actual = err.costMicros;
+        if (controller.signal.aborted && err.kind === 'unavailable') throw new RequestError(504, 'upstream_failed', 'timeout');
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
+      res.off('close', onClose);
+      store.settle(reservation.day, provider.worstCaseMicros, actual);
+    }
   }
 
   async function recognize(req: IncomingMessage, res: ServerResponse): Promise<number> {
@@ -115,13 +155,14 @@ export function createApp(deps: AppDeps) {
 
     const ip = clientIp(req, config.trustProxy);
     // Order matters: minute windows first so bursts don't burn the daily allowance.
-    for (const [limiter, key] of [
-      [ipMinute, ip],
-      [installMinute, installId],
-      [ipDay, ip],
-      [installDay, installId],
+    const now = clock.now();
+    for (const [key, limit, windowMs] of [
+      [`ip:m:${ip}`, config.perIpPerMinute, MINUTE],
+      [`install:m:${installId}`, config.perInstallPerMinute, MINUTE],
+      [`ip:d:${ip}`, config.perIpPerDay, DAY],
+      [`install:d:${installId}`, config.perInstallPerDay, DAY],
     ] as const) {
-      const retryAfter = limiter.hit(key);
+      const retryAfter = store.hit(key, limit, windowMs, now);
       if (retryAfter > 0) {
         send(res, 429, { error: 'rate_limited' }, { 'Retry-After': String(retryAfter) });
         return 429;
@@ -146,39 +187,44 @@ export function createApp(deps: AppDeps) {
       throw err;
     }
 
-    if (!concurrency.tryAcquire()) {
-      send(res, 429, { error: 'busy' }, { 'Retry-After': '2' });
-      return 429;
+    // Deduplication: the same photo (byte-identical after redaction and metadata stripping) is answered from cache.
+    const hash = createHash('sha256').update(image.jpeg).digest('hex');
+    const cached = config.resultCacheMs > 0 ? store.getCached(hash, clock.now()) : null;
+    if (cached) {
+      send(res, 200, JSON.parse(cached) as RecognitionResponse, { 'X-Recognition-Cache': 'hit' });
+      return 200;
+    }
+
+    let pending = inflight.get(hash);
+    const owner = !pending;
+    if (!pending) {
+      if (!concurrency.tryAcquire()) {
+        send(res, 429, { error: 'busy' }, { 'Retry-After': '2' });
+        return 429;
+      }
+      pending = callProvider(image, res).finally(() => {
+        concurrency.release();
+        inflight.delete(hash);
+      });
+      inflight.set(hash, pending);
     }
     try {
-      if (!budget.tryConsume()) {
-        send(res, 503, { error: 'daily_budget_exhausted' }, { 'Retry-After': '3600' });
-        return 503;
+      const { response } = await pending;
+      if (owner && config.resultCacheMs > 0) store.putCached(hash, JSON.stringify(response), clock.now() + config.resultCacheMs);
+      send(res, 200, response);
+      return 200;
+    } catch (err) {
+      if (err instanceof RequestError) {
+        send(res, err.status, { error: err.code }, err.status === 503 ? { 'Retry-After': '3600' } : {});
+        return err.status;
       }
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), config.upstreamTimeoutMs);
-      const onClose = () => {
-        if (!res.writableEnded) controller.abort();
-      };
-      res.on('close', onClose);
-      try {
-        const result = await provider.identify(image, controller.signal);
-        send(res, 200, result);
-        return 200;
-      } catch (err) {
-        if (err instanceof UpstreamError) {
-          if (err.kind === 'misconfigured') log(`ERROR upstream credentials rejected (${provider.id})`);
-          const status = err.kind === 'refused' ? 422 : controller.signal.aborted ? 504 : 502;
-          send(res, status, { error: err.kind === 'refused' ? 'image_rejected' : 'upstream_failed' });
-          return status;
-        }
-        throw err;
-      } finally {
-        clearTimeout(timer);
-        res.off('close', onClose);
+      if (err instanceof UpstreamError) {
+        if (err.kind === 'misconfigured') log(`ERROR upstream credentials rejected (${provider.id})`);
+        const status = err.kind === 'refused' ? 422 : 502;
+        send(res, status, { error: err.kind === 'refused' ? 'image_rejected' : 'upstream_failed' });
+        return status;
       }
-    } finally {
-      concurrency.release();
+      throw err;
     }
   }
 
@@ -210,5 +256,5 @@ export function createApp(deps: AppDeps) {
     log(`${req.method} ${path} ${status} ${clock.now() - started}ms`);
   }
 
-  return { handle, sweep, budget };
+  return { handle, sweep, store };
 }

@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 
 import { ContractCard } from '@/components/game';
-import { EmptyState, Panel, Screen, SectionHeader, Txt } from '@/components/ui';
+import { router } from 'expo-router';
+
+import { BackHeader, EmptyState, Panel, Screen, SectionHeader, Txt } from '@/components/ui';
 import { periodEnd } from '@/domain/time';
 import { useAppState, useAppStore } from '@/state/AppProvider';
 import { colors, space } from '@/theme/tokens';
@@ -36,8 +38,7 @@ export default function Contracts() {
   const doneToday = daily.filter((c) => c.completedAt !== null).length;
 
   return (
-    <Screen>
-      <Txt variant="h1">Contracts</Txt>
+    <Screen header={<BackHeader title="Contracts" onBack={() => (router.canGoBack() ? router.back() : router.navigate('/career'))} />}>
       <Panel style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         <View style={{ gap: 2 }}>
           <Txt variant="label" upper>

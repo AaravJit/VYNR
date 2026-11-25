@@ -1,164 +1,266 @@
-import { router } from 'expo-router';
-import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as Crypto from 'expo-crypto';
+import { router, useIsFocused } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, AppState, Linking, Pressable, StyleSheet, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CATEGORY_LABELS, catalog } from '@/catalog';
-import { ContractCard, DevModeBanner, LevelPanel, VehicleRow } from '@/components/game';
+import { ApertureMark, BrandLockup, GradientRing } from '@/components/Brand';
+import { DevModeBanner } from '@/components/game';
 import { Icon } from '@/components/Icon';
-import { Button, EmptyState, Panel, ProgressBar, Screen, SectionHeader, Txt } from '@/components/ui';
-import type { VehicleCategory } from '@/domain/types';
-import { useAppState, useAppStore } from '@/state/AppProvider';
-import { colors, radius, space } from '@/theme/tokens';
+import { Viewfinder } from '@/components/ScanOverlay';
+import { Button, Notice, Txt } from '@/components/ui';
+import { prepareForRecognition } from '@/services/imageService';
+import { playSound } from '@/services/sound';
+import { recognitionConfig, useAppState, useHaptics } from '@/state/AppProvider';
+import { startScanSession } from '@/state/scanSession';
+import { colors, layout, radius, space } from '@/theme/tokens';
 
-const FEATURED: VehicleCategory[] = ['sports', 'supercar', 'offroad', 'pickup', 'suv', 'hypercar'];
+const TAB_BAR_SPACE = layout.tabBarHeight;
 
-function timeAgo(ts: number): string {
-  const s = Math.max(0, (Date.now() - ts) / 1000);
-  if (s < 60) return 'just now';
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-  return `${Math.floor(s / 86400)}d ago`;
-}
+type Phase = 'idle' | 'capturing' | 'processing' | 'error';
 
-export default function Home() {
+/**
+ * The scanner is the home screen. The camera runs only while this tab is
+ * focused and the app is in the foreground; nothing is sent anywhere until the
+ * player presses the shutter, and recognition is never continuous.
+ */
+export default function Scanner() {
+  const [permission, requestPermission] = useCameraPermissions();
+  const camera = useRef<CameraView>(null);
+  // Synchronous guard so a double tap cannot start two captures.
+  const captureLock = useRef(false);
+  const haptics = useHaptics();
   const state = useAppState();
-  const store = useAppStore();
-  const { daily } = useMemo(() => store.currentContracts(), [store, state.revision]); // eslint-disable-line react-hooks/exhaustive-deps
-  const recent = useMemo(() => [...state.encounters].reverse().slice(0, 4), [state.encounters]);
-  const discovered = useMemo(
-    () => new Set(state.encounters.map((e) => e.vehicleId).filter((x): x is string => !!x)),
-    [state.encounters],
-  );
-  const featured = useMemo(
-    () =>
-      FEATURED.map((cat) => {
-        const all = catalog.vehicles.filter((v) => v.category === cat);
-        return { cat, total: all.length, found: all.filter((v) => discovered.has(v.id)).length };
-      }),
-    [discovered],
-  );
+  const focused = useIsFocused();
+  const insets = useSafeAreaInsets();
+  const [foreground, setForeground] = useState(AppState.currentState === 'active');
+  const [ready, setReady] = useState(false);
+  const [phase, setPhase] = useState<Phase>('idle');
+  const [error, setError] = useState<string | null>(null);
+  const [torch, setTorch] = useState(false);
 
-  return (
-    <Screen>
-      <View style={styles.header}>
-        <Txt variant="h1">VYNR</Txt>
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => setForeground(s === 'active'));
+    return () => sub.remove();
+  }, []);
+
+  // Coming back to the scanner always resets it for the next shot.
+  useEffect(() => {
+    if (focused) {
+      captureLock.current = false;
+      setPhase('idle');
+    } else {
+      setTorch(false);
+    }
+  }, [focused]);
+
+  const active = focused && foreground;
+
+  const capture = async () => {
+    if (!camera.current || captureLock.current) return;
+    captureLock.current = true;
+    setPhase('capturing');
+    setError(null);
+    haptics.impact();
+    playSound('shutter', state.settings.soundEnabled);
+    try {
+      const photo = await camera.current.takePictureAsync({ quality: 0.9, exif: false, base64: false, shutterSound: false });
+      if (!photo) throw new Error('The camera did not return a photo.');
+      setPhase('processing');
+      const prepared = await prepareForRecognition(photo.uri, photo.width, photo.height);
+      const id = Crypto.randomUUID();
+      startScanSession({
+        id,
+        image: { base64: prepared.base64, width: prepared.width, height: prepared.height },
+        previewUri: prepared.previewUri,
+        redaction: prepared.redaction,
+        result: null,
+        createdAt: Date.now(),
+      });
+      router.push({ pathname: '/identify', params: { scanId: id } });
+    } catch (e) {
+      haptics.error();
+      setPhase('error');
+      setError(e instanceof Error ? e.message : 'Capture failed.');
+      captureLock.current = false;
+    }
+  };
+
+  /** Development-only path for simulators without a camera. Clearly labelled and absent in release builds. */
+  const simulate = () => {
+    const id = Crypto.randomUUID();
+    startScanSession({ id, image: null, previewUri: null, redaction: null, result: null, createdAt: Date.now() });
+    router.push({ pathname: '/identify', params: { scanId: id } });
+  };
+
+  const header = (
+    <View style={styles.topBar}>
+      <View style={styles.glassPill}>
+        <BrandLockup size={20} />
+      </View>
+      <View style={{ flex: 1, alignItems: 'center' }}>
         <DevModeBanner />
       </View>
-
-      <LevelPanel level={state.level} username={state.player?.username ?? ''} />
-
-      <Panel style={styles.scanCta} onPress={() => router.push('/scan')} accessibilityLabel="Open scanner">
-        <View style={{ flex: 1, gap: 4 }}>
-          <Txt variant="label" color={colors.accentInk}>
-            SCANNER READY
-          </Txt>
-          <Txt variant="h2" color={colors.accentInk}>
-            Identify a vehicle
-          </Txt>
-        </View>
-        <View style={styles.scanIcon}>
-          <Icon name="scan" size={28} color={colors.accent} strokeWidth={2} />
-        </View>
-      </Panel>
-
-      <Panel style={{ gap: space.md }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <Txt variant="label" upper>
-            Collection
-          </Txt>
-          <Txt variant="mono" color={colors.textMuted}>
-            {state.stats.uniqueVehicles}/{state.stats.catalogSize}
-          </Txt>
-        </View>
-        <Txt variant="stat">{state.stats.completionPercent.toFixed(1)}%</Txt>
-        <ProgressBar value={state.stats.completionPercent / 100} label="Collection completion" />
-      </Panel>
-
-      <SectionHeader
-        title="Daily contracts"
-        action={<Button label="All" variant="ghost" compact onPress={() => router.push('/contracts')} />}
-      />
-      {daily.length === 0 ? (
-        <Txt variant="small" color={colors.textMuted}>
-          New contracts are being generated.
-        </Txt>
+      {permission?.granted ? (
+        <Pressable
+          accessibilityRole="switch"
+          accessibilityState={{ checked: torch }}
+          accessibilityLabel="Torch"
+          onPress={() => {
+            haptics.selection();
+            setTorch((t) => !t);
+          }}
+          style={[styles.roundBtn, torch && { backgroundColor: colors.text }]}
+        >
+          <Icon name="flash" size={20} color={torch ? colors.bg : colors.text} />
+        </Pressable>
       ) : (
-        daily.map((c) => <ContractCard key={c.id} contract={c} />)
+        <View style={{ width: 44 }} />
       )}
+    </View>
+  );
 
-      <SectionHeader
-        title="Recent discoveries"
-        action={recent.length > 0 ? <Button label="Garage" variant="ghost" compact onPress={() => router.push('/garage')} /> : null}
-      />
-      {recent.length === 0 ? (
-        <EmptyState
-          icon="scan"
-          title="No sightings yet"
-          body="Photograph a car you see on the street to start your collection."
-          action={<Button label="Start scanning" icon="scan" onPress={() => router.push('/scan')} />}
-        />
-      ) : (
-        recent.map((e) => {
-          const v = e.vehicleId ? catalog.getVehicle(e.vehicleId) : undefined;
-          if (!v) {
-            return (
-              <Panel key={e.id} style={{ gap: 4 }}>
-                <Txt variant="h3">{e.label ?? 'Unidentified vehicle'}</Txt>
-                <Txt variant="small" color={colors.textMuted}>
-                  Field note · +{e.xpAwarded} XP · {timeAgo(e.createdAt)}
-                </Txt>
-              </Panel>
-            );
-          }
-          return (
-            <VehicleRow
-              key={e.id}
-              vehicle={v}
-              subtitle={`${e.isFirstDiscovery ? 'First discovery' : `Encounter #${e.encounterIndex + 1}`} · +${e.xpAwarded} XP · ${timeAgo(e.createdAt)}`}
-              onPress={() => router.push({ pathname: '/vehicle/[vehicleId]', params: { vehicleId: v.id } })}
-            />
-          );
-        })
-      )}
-
-      <SectionHeader title="Featured categories" />
-      <View style={styles.grid}>
-        {featured.map(({ cat, total, found }) => (
-          <Panel
-            key={cat}
-            style={styles.catTile}
-            onPress={() => router.push({ pathname: '/garage', params: { category: cat } })}
-            accessibilityLabel={`${CATEGORY_LABELS[cat]}: ${found} of ${total} discovered`}
-          >
-            <Txt variant="bodyStrong">{CATEGORY_LABELS[cat]}</Txt>
-            <Txt variant="mono" color={colors.textMuted}>
-              {found}/{total}
-            </Txt>
-            <ProgressBar value={total ? found / total : 0} height={3} />
-          </Panel>
-        ))}
+  if (!permission) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator color={colors.accent} />
       </View>
-    </Screen>
+    );
+  }
+
+  if (!permission.granted) {
+    return (
+      <SafeAreaView style={[styles.root, { backgroundColor: colors.bg }]} edges={['top']}>
+        {header}
+        <View style={[styles.permission, { paddingBottom: TAB_BAR_SPACE + insets.bottom }]}>
+          <ApertureMark size={64} />
+          <Txt variant="h2" align="center">
+            Point. Shoot. Collect.
+          </Txt>
+          <Txt variant="body" color={colors.textMuted} align="center">
+            VYNR needs the camera to photograph cars you spot. It only runs while the scanner is open, and nothing is
+            sent until you press the shutter.
+          </Txt>
+          {permission.canAskAgain ? (
+            <Button label="Allow camera" icon="scan" onPress={() => void requestPermission()} />
+          ) : (
+            <Button label="Open Settings" onPress={() => void Linking.openSettings()} />
+          )}
+          {recognitionConfig.mode === 'mock' && <Button label="Simulate capture (dev)" variant="secondary" onPress={simulate} />}
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const busy = phase === 'capturing' || phase === 'processing';
+  return (
+    <View style={styles.root}>
+      <CameraView
+        ref={camera}
+        style={StyleSheet.absoluteFill}
+        facing="back"
+        active={active}
+        enableTorch={torch && active}
+        animateShutter
+        onCameraReady={() => setReady(true)}
+        onMountError={(e) => {
+          setPhase('error');
+          setError(e.message);
+        }}
+      />
+      <Viewfinder
+        state={busy ? 'busy' : ready ? 'ready' : 'starting'}
+        hint={phase === 'processing' ? 'Securing photo…' : ready ? 'Fit the whole car in the frame' : 'Starting camera…'}
+      />
+      <SafeAreaView style={StyleSheet.absoluteFill} edges={['top']} pointerEvents="box-none">
+        {header}
+        <View style={{ flex: 1 }} pointerEvents="none" />
+        <View style={[styles.dock, { marginBottom: TAB_BAR_SPACE + insets.bottom }]}>
+          {error && <Notice tone="danger" title="Capture failed" body={error} />}
+          <View style={styles.shutterRow}>
+            <View style={styles.sideSlot}>
+              <Txt variant="label" color={colors.textMuted} align="center">
+                {state.stats.uniqueVehicles}/{state.stats.catalogSize}
+              </Txt>
+              <Txt variant="label" color={colors.textFaint} align="center" style={{ fontSize: 9 }}>
+                COLLECTED
+              </Txt>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Capture photo"
+              accessibilityHint="Photographs the vehicle and identifies it"
+              accessibilityState={{ disabled: !ready || busy, busy }}
+              disabled={!ready || busy}
+              onPress={() => void capture()}
+              style={({ pressed }) => [styles.shutter, (pressed || busy) && { transform: [{ scale: 0.94 }] }]}
+            >
+              <GradientRing size={84} stroke={4} />
+              {busy ? <ActivityIndicator color={colors.text} /> : <View style={styles.shutterInner} />}
+            </Pressable>
+            <View style={styles.sideSlot}>
+              {recognitionConfig.mode === 'mock' ? (
+                <Pressable accessibilityRole="button" accessibilityLabel="Simulate capture, development only" onPress={simulate} style={styles.simBtn}>
+                  <Txt variant="label" color={colors.warning}>
+                    SIM
+                  </Txt>
+                </Pressable>
+              ) : null}
+            </View>
+          </View>
+          <Txt variant="small" color={colors.textFaint} align="center">
+            Never scan while driving. Faces and plates are blurred on your phone.
+          </Txt>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
-  scanCta: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
+  root: { flex: 1, backgroundColor: '#000' },
+  center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: space.md,
+    paddingHorizontal: space.lg,
+    paddingTop: space.sm,
+    gap: space.sm,
   },
-  scanIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.md,
-    backgroundColor: colors.accentInk,
+  glassPill: {
+    paddingHorizontal: 12,
+    height: 40,
+    justifyContent: 'center',
+    borderRadius: radius.pill,
+    backgroundColor: colors.glass,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.glassBorder,
+  },
+  roundBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.glass,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.glassBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  catTile: { width: '48.5%', flexGrow: 1, gap: 6, padding: space.md },
+  permission: { flex: 1, justifyContent: 'center', alignItems: 'stretch', padding: space.xl, gap: space.lg },
+  dock: { paddingHorizontal: space.lg, paddingBottom: space.md, gap: space.md },
+  shutterRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.md },
+  sideSlot: { width: 72, alignItems: 'center', gap: 2 },
+  shutter: { width: 84, height: 84, alignItems: 'center', justifyContent: 'center' },
+  shutterInner: { width: 66, height: 66, borderRadius: 33, backgroundColor: colors.text },
+  simBtn: {
+    width: 64,
+    height: 44,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.warningLine,
+    backgroundColor: colors.glass,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

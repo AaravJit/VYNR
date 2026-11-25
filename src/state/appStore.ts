@@ -48,6 +48,8 @@ export interface AppStoreDeps {
   clock?: Clock;
   /** Called with photo URIs that must be deleted when the player wipes their data. */
   deletePhotos?: (uris: string[]) => void;
+  /** Deletes one saved photo (used when an encounter fails to save). */
+  deletePhoto?: (uri: string) => void;
 }
 
 /**
@@ -169,7 +171,14 @@ export class AppStore {
 
   async recordEncounter(input: Omit<EncounterInput, 'now'>): Promise<EncounterOutcome> {
     const { game, player } = this.requireReady();
-    const outcome = await game.recordEncounter(player.id, input);
+    let outcome: EncounterOutcome;
+    try {
+      outcome = await game.recordEncounter(player.id, input);
+    } catch (e) {
+      // Nothing was recorded, so a photo saved for this encounter would be orphaned: remove it.
+      if (input.photoUri) this.deps.deletePhoto?.(input.photoUri);
+      throw e;
+    }
     await this.reload();
     return outcome;
   }

@@ -5,13 +5,31 @@ export type UpstreamErrorKind = 'unavailable' | 'invalid_output' | 'refused' | '
 
 export class UpstreamError extends Error {
   readonly kind: UpstreamErrorKind;
-  constructor(kind: UpstreamErrorKind, message: string) {
+  /** Spend already incurred before the failure (e.g. a truncated or refused response is still billed). */
+  readonly costMicros: number;
+  constructor(kind: UpstreamErrorKind, message: string, costMicros = 0) {
     super(message);
     this.kind = kind;
+    this.costMicros = costMicros;
   }
+}
+
+export interface ModelCall {
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  costMicros: number;
+}
+
+export interface Identification {
+  response: RecognitionResponse;
+  /** One entry per model call made for this identification (a tiered provider may make two). */
+  calls: ModelCall[];
 }
 
 export interface VisionProvider {
   readonly id: string;
-  identify(image: ValidImage, signal: AbortSignal): Promise<RecognitionResponse>;
+  /** Upper bound on what one identify() may cost, in micro-dollars. Reserved before the call. */
+  readonly worstCaseMicros: number;
+  identify(image: ValidImage, signal: AbortSignal): Promise<Identification>;
 }
