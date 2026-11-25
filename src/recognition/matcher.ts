@@ -68,7 +68,7 @@ function matchOne(catalog: Catalog, c: RecognitionCandidate): CatalogMatch[] {
   const sameModel = scored.filter((x) => x.s === top).map((x) => x.v);
   if (sameModel.length === 1) {
     const v = sameModel[0]!;
-    return [{ vehicle: v, confidence: c.confidence, quality: generationMatches(v, c.generation) || !c.generation ? 'generation' : 'model', prediction: c }];
+    return [{ vehicle: v, confidence: c.confidence, quality: generationMatches(v, c.generation) ? 'generation' : 'model', prediction: c }];
   }
   const genHits = sameModel.filter((v) => generationMatches(v, c.generation));
   if (genHits.length === 1) {

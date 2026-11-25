@@ -8,7 +8,7 @@ Status as of 25 November 2026: **MVP feature-complete and verified in automated 
 | --- | --- | --- |
 | Type check (app) | `npm run typecheck` | Pass, strict mode |
 | Lint | `npm run lint` | Pass, 0 warnings |
-| App tests | `npm test` | **91/91 pass** in 9 suites |
+| App tests | `npm test` | **94/94 pass** in 9 suites |
 | Server type check | `npm --prefix server run typecheck` | Pass |
 | Server tests | `npm --prefix server test` | **26/26 pass** |
 | Native bundles | `npm run export:check` | iOS and Android Hermes bundles build |

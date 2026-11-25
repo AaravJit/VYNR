@@ -169,6 +169,33 @@ describe('Identify flow', () => {
     expect(store.getState().encounters[0]).toMatchObject({ vehicleId: 'kia-ev6', source: 'ai_confirmed' });
   });
 
+  it('offers catalog correction when no prediction matches the catalog', async () => {
+    const store = await readyStore();
+    startScanSession({
+      id: 'scan-5',
+      image: null,
+      previewUri: null,
+      createdAt: Date.now(),
+      result: {
+        vehicleDetected: true,
+        candidates: [{ make: 'Koenigsegg', model: 'Jesko', generation: null, confidence: 0.6 }],
+        notes: null,
+        provider: 'remote',
+        simulated: false,
+      },
+    });
+    mockParams = { scanId: 'scan-5' };
+    const Identify = require('@/app/identify').default;
+    await render(
+      <AppProvider store={store}>
+        <Identify />
+      </AppProvider>,
+    );
+    expect(await screen.findByText('Not in the VYNR catalog yet')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Choose the correct vehicle from the catalog'));
+    expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/catalog-picker', params: { scanId: 'scan-5' } });
+  });
+
   it('runs simulated recognition on-device in development builds regardless of cloud consent', async () => {
     const store = await readyStore();
     await store.setSetting('cloudRecognitionConsent', false);

@@ -75,6 +75,12 @@ describe('matchCandidates', () => {
     expect(vague.matches.every((m) => m.quality === 'model')).toBe(true);
   });
 
+  it('keeps the generation uncertain when the prediction names none, even with a single catalog match', () => {
+    const { matches } = matchCandidates(catalog, [{ make: 'Toyota', model: 'Corolla', generation: null, confidence: 0.9 }]);
+    expect(matches).toHaveLength(1);
+    expect(matches[0]?.quality).toBe('model');
+  });
+
   it('reports predictions not present in the catalog', () => {
     const { matches, unmatched } = matchCandidates(catalog, [{ make: 'Koenigsegg', model: 'Jesko', generation: null, confidence: 0.6 }]);
     expect(matches).toHaveLength(0);
@@ -158,6 +164,16 @@ describe('RemoteRecognitionProvider', () => {
       ) as unknown as typeof fetch,
     });
     await expect(hanging.recognize(image)).rejects.toMatchObject({ code: 'timeout' });
+  });
+
+  it('times out when headers arrive but the body stalls', async () => {
+    const stalled = new RemoteRecognitionProvider({
+      endpoint: 'https://x',
+      installId: 'a',
+      timeoutMs: 20,
+      fetchImpl: jest.fn(async () => new Response(new ReadableStream({ start() {} }), { status: 200 })) as unknown as typeof fetch,
+    });
+    await expect(stalled.recognize(image)).rejects.toMatchObject({ code: 'timeout' });
   });
 
   it('requires an image', async () => {

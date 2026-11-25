@@ -302,7 +302,7 @@ export default function Identify() {
               <Notice
                 tone="warning"
                 title="Generation uncertain"
-                body="The model matched, but the generation could not be confirmed. Check the options below."
+                body="The model matched, but the photo did not confirm this generation. If it looks different, choose another vehicle."
               />
             )}
             {selectedMatch && !isManual && confidenceBand(selectedMatch.confidence) !== 'high' && (
@@ -396,6 +396,7 @@ export default function Identify() {
               </Panel>
             );
           })}
+          {!vehicle && <Button label="Choose the correct vehicle from the catalog" icon="search" disabled={saving} onPress={openPicker} />}
         </>
       )}
     </Screen>
