@@ -94,3 +94,43 @@ it('stops calling the service when the daily cap is reached', async () => {
   expect(await screen.findByText('Daily identification limit reached')).toBeTruthy();
   expect(mockFetch).not.toHaveBeenCalled();
 });
+
+it('does not upload when consent is revoked while recognition is starting', async () => {
+  const s = await store(true);
+  // Revoke consent during the allowance check, after the screen has decided to recognise.
+  const realAllowance = s.recognitionAllowance.bind(s);
+  jest.spyOn(s, 'recognitionAllowance').mockImplementation(async () => {
+    const left = await realAllowance();
+    await s.setSetting('cloudRecognitionConsent', false);
+    return left;
+  });
+  const Identify = require('@/app/identify').default;
+  await render(
+    <AppProvider store={s}>
+      <Identify />
+    </AppProvider>,
+  );
+  expect(await screen.findByText('Cloud identification is off')).toBeTruthy();
+  expect(mockFetch).not.toHaveBeenCalled();
+});
+
+it('does not upload after the screen is closed mid-start', async () => {
+  const s = await store(true);
+  let release!: () => void;
+  const gate = new Promise<void>((r) => (release = r));
+  const realAllowance = s.recognitionAllowance.bind(s);
+  jest.spyOn(s, 'recognitionAllowance').mockImplementation(async () => {
+    await gate;
+    return realAllowance();
+  });
+  const Identify = require('@/app/identify').default;
+  const view = await render(
+    <AppProvider store={s}>
+      <Identify />
+    </AppProvider>,
+  );
+  await view.unmount();
+  release();
+  await new Promise((r) => setTimeout(r, 50));
+  expect(mockFetch).not.toHaveBeenCalled();
+});

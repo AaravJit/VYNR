@@ -27,6 +27,7 @@ export class RemoteRecognitionProvider implements RecognitionProvider {
   async recognize(image: PreparedImage | null, signal?: AbortSignal): Promise<RecognitionResult> {
     if (!image) throw new RecognitionError('invalid_request', 'A photo is required.');
     const { endpoint, installId, timeoutMs = 25000, fetchImpl = fetch } = this.options;
+    if (signal?.aborted) throw new RecognitionError('network', 'Recognition was cancelled.');
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     const onAbort = () => controller.abort();

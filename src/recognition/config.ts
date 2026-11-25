@@ -11,7 +11,7 @@ export const CLIENT_DAILY_RECOGNITION_LIMIT = 40;
 /**
  * Resolves the recognition mode from public build-time env vars.
  *
- * - EXPO_PUBLIC_RECOGNITION_MODE=mock   → simulated recognition (always labelled DEV)
+ * - EXPO_PUBLIC_RECOGNITION_MODE=mock   → simulated recognition, development builds only (always labelled)
  * - EXPO_PUBLIC_RECOGNITION_MODE=remote → requires EXPO_PUBLIC_RECOGNITION_ENDPOINT
  * - unset: development builds default to mock; release builds are 'unconfigured'
  *   (manual identification only) so no simulated result can ship by accident.
@@ -25,7 +25,8 @@ export function resolveRecognitionConfig(
   const endpoint = env.endpoint?.trim() || null;
   const validEndpoint = endpoint && /^https:\/\//i.test(endpoint) ? endpoint : isDev && endpoint?.startsWith('http://') ? endpoint : null;
   const mode = env.mode?.trim().toLowerCase();
-  if (mode === 'mock') return { mode: 'mock', endpoint: null };
+  // Simulated recognition is a development tool only: release builds can never enable it.
+  if (mode === 'mock') return isDev ? { mode: 'mock', endpoint: null } : { mode: 'unconfigured', endpoint: null };
   if (mode === 'remote') return validEndpoint ? { mode: 'remote', endpoint: validEndpoint } : { mode: 'unconfigured', endpoint: null };
   if (validEndpoint) return { mode: 'remote', endpoint: validEndpoint };
   return isDev ? { mode: 'mock', endpoint: null } : { mode: 'unconfigured', endpoint: null };

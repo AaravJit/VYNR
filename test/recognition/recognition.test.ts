@@ -176,6 +176,15 @@ describe('RemoteRecognitionProvider', () => {
     await expect(stalled.recognize(image)).rejects.toMatchObject({ code: 'timeout' });
   });
 
+  it('does not send anything when the caller has already cancelled', async () => {
+    const fetchImpl = jest.fn();
+    const p = new RemoteRecognitionProvider({ endpoint: 'https://x', installId: 'a', fetchImpl: fetchImpl as unknown as typeof fetch });
+    const c = new AbortController();
+    c.abort();
+    await expect(p.recognize(image, c.signal)).rejects.toBeInstanceOf(RecognitionError);
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
   it('requires an image', async () => {
     const p = new RemoteRecognitionProvider({ endpoint: 'https://x', installId: 'a', fetchImpl: ok({}) });
     await expect(p.recognize(null)).rejects.toBeInstanceOf(RecognitionError);
@@ -193,6 +202,10 @@ describe('resolveRecognitionConfig', () => {
     expect(resolveRecognitionConfig({ endpoint: 'http://api.vynr.app' }, false).mode).toBe('unconfigured');
     expect(resolveRecognitionConfig({ endpoint: 'http://192.168.1.5:8787' }, true).mode).toBe('remote');
     expect(resolveRecognitionConfig({ mode: 'remote' }, false).mode).toBe('unconfigured');
-    expect(resolveRecognitionConfig({ mode: 'MOCK', endpoint: 'https://x' }, false).mode).toBe('mock');
+    expect(resolveRecognitionConfig({ mode: 'MOCK', endpoint: 'https://x' }, true).mode).toBe('mock');
+  });
+
+  it('refuses simulated recognition in release builds even when requested', () => {
+    expect(resolveRecognitionConfig({ mode: 'mock' }, false)).toEqual({ mode: 'unconfigured', endpoint: null });
   });
 });

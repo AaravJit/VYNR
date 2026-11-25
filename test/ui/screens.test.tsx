@@ -196,6 +196,36 @@ describe('Identify flow', () => {
     expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/catalog-picker', params: { scanId: 'scan-5' } });
   });
 
+  it('requires an explicit generation choice when several generations match', async () => {
+    const store = await readyStore();
+    startScanSession({
+      id: 'scan-6',
+      image: null,
+      previewUri: null,
+      createdAt: Date.now(),
+      result: {
+        vehicleDetected: true,
+        candidates: [{ make: 'Ford', model: 'Mustang', generation: null, confidence: 0.9 }],
+        notes: null,
+        provider: 'remote',
+        simulated: false,
+      },
+    });
+    mockParams = { scanId: 'scan-6' };
+    const Identify = require('@/app/identify').default;
+    await render(
+      <AppProvider store={store}>
+        <Identify />
+      </AppProvider>,
+    );
+    expect(await screen.findByText('Which generation is it?')).toBeTruthy();
+    expect(screen.queryByLabelText('Confirm & add to garage')).toBeNull();
+    await fireEvent.press(screen.getByLabelText(/^Select Ford Mustang S650/));
+    await fireEvent.press(await screen.findByLabelText('Confirm & add to garage'));
+    await waitFor(() => expect(store.getState().encounters).toHaveLength(1));
+    expect(store.getState().encounters[0]?.vehicleId).toBe('ford-mustang-s650');
+  });
+
   it('runs simulated recognition on-device in development builds regardless of cloud consent', async () => {
     const store = await readyStore();
     await store.setSetting('cloudRecognitionConsent', false);

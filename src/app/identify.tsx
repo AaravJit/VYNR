@@ -57,27 +57,38 @@ export default function Identify() {
   useEffect(() => {
     const s = getScanSession(scanId);
     if (!s || !state.player || s.result) return;
-    let cancelled = false;
+    // Created before any await so leaving the screen cancels every step, including the upload.
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const stopped = () => controller.signal.aborted;
+    // Consent is read from the store at each step, not from this render, so revoking it always wins.
+    const consented = () => store.getState().settings.cloudRecognitionConsent;
     const run = async () => {
       if (recognitionConfig.mode === 'unconfigured') return setPhase({ kind: 'manual', reason: 'unconfigured' });
-      if (recognitionConfig.mode === 'remote' && !consent) return setPhase({ kind: 'manual', reason: 'no_consent' });
+      if (recognitionConfig.mode === 'remote' && !consented()) return setPhase({ kind: 'manual', reason: 'no_consent' });
       if (recognitionConfig.mode === 'remote' && (await store.recognitionAllowance()) <= 0) {
-        return setPhase({ kind: 'manual', reason: 'quota' });
+        if (!stopped()) setPhase({ kind: 'manual', reason: 'quota' });
+        return;
       }
+      if (stopped()) return;
       const provider = await getRecognitionProvider(state.player!.id);
+      if (stopped()) return;
       if (!provider) return setPhase({ kind: 'manual', reason: 'unconfigured' });
       setPhase({ kind: 'analysing' });
-      const controller = new AbortController();
-      abortRef.current = controller;
       try {
-        if (!provider.simulated) await store.noteRecognitionUsed();
+        if (!provider.simulated) {
+          await store.noteRecognitionUsed();
+          // Last check immediately before the photo leaves the device.
+          if (stopped()) return;
+          if (!consented()) return setPhase({ kind: 'manual', reason: 'no_consent' });
+        }
         const result = await provider.recognize(s.image, controller.signal);
-        if (cancelled) return;
+        if (stopped()) return;
         updateScanSession(s.id, { result });
         setPhase({ kind: 'done' });
         haptics.success();
       } catch (e) {
-        if (cancelled || controller.signal.aborted) return;
+        if (stopped()) return;
         haptics.error();
         if (e instanceof RecognitionError && e.code === 'quota_exceeded') {
           setPhase({ kind: 'manual', reason: 'quota' });
@@ -87,10 +98,7 @@ export default function Identify() {
       }
     };
     void run();
-    return () => {
-      cancelled = true;
-      abortRef.current?.abort();
-    };
+    return () => controller.abort();
   }, [scanId, attempt, consent]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const result = session?.result ?? null;
@@ -99,10 +107,18 @@ export default function Identify() {
     [result],
   );
 
-  // Default selection: manual choice, otherwise the top match.
+  // When the model matched but several catalog generations fit, the player must choose one explicitly.
+  const topMatch = match.matches[0];
+  const generationAmbiguous =
+    !!topMatch &&
+    topMatch.quality === 'model' &&
+    match.matches.filter((m) => m.vehicle.manufacturerId === topMatch.vehicle.manufacturerId && m.vehicle.model === topMatch.vehicle.model)
+      .length > 1;
+
+  // Default selection: manual choice, otherwise the top match unless its generation is ambiguous.
   const effectiveId = session?.unknownLabel
     ? null
-    : (session?.manualVehicleId ?? selectedId ?? match.matches[0]?.vehicle.id ?? null);
+    : (session?.manualVehicleId ?? selectedId ?? (generationAmbiguous ? null : (match.matches[0]?.vehicle.id ?? null)));
   const vehicle = effectiveId ? catalog.getVehicle(effectiveId) : undefined;
   const selectedMatch: CatalogMatch | undefined = match.matches.find((m) => m.vehicle.id === effectiveId);
   const isManual = !!session?.manualVehicleId && !selectedMatch;
@@ -350,9 +366,17 @@ export default function Identify() {
         </Panel>
       )}
 
-      {match.matches.length > 1 && (
+      {!vehicle && !session?.unknownLabel && generationAmbiguous && (
+        <Notice
+          tone="warning"
+          title="Which generation is it?"
+          body={`The photo matched the ${catalog.displayName(topMatch!.vehicle)}, but not a specific generation. Choose the one you saw below, or pick another vehicle.`}
+        />
+      )}
+
+      {(match.matches.length > 1 || (generationAmbiguous && !vehicle)) && (
         <>
-          <SectionHeader title="Other possibilities" />
+          <SectionHeader title={!vehicle && generationAmbiguous ? 'Choose the generation' : 'Other possibilities'} />
           {match.matches
             .filter((m) => m.vehicle.id !== effectiveId)
             .map((m) => (
@@ -377,6 +401,9 @@ export default function Identify() {
                 </Txt>
               </Panel>
             ))}
+          {!vehicle && (
+            <Button label="None of these? Choose from the catalog" variant="secondary" icon="search" onPress={openPicker} />
+          )}
         </>
       )}
 

@@ -8,7 +8,7 @@ Status as of 25 November 2026: **MVP feature-complete and verified in automated 
 | --- | --- | --- |
 | Type check (app) | `npm run typecheck` | Pass, strict mode |
 | Lint | `npm run lint` | Pass, 0 warnings |
-| App tests | `npm test` | **94/94 pass** in 9 suites |
+| App tests | `npm test` | **99/99 pass** in 9 suites |
 | Server type check | `npm --prefix server run typecheck` | Pass |
 | Server tests | `npm --prefix server test` | **26/26 pass** |
 | Native bundles | `npm run export:check` | iOS and Android Hermes bundles build |
@@ -87,5 +87,9 @@ Reviews during the build and a final audit against the brief found and fixed:
 - The field-note copy promised an action that had no button. The button and flow were added.
 - The template's MIT licence named Expo's copyright holder. It was removed, and choosing a licence is listed for the owner.
 - Template icons, splash colours and web server output were replaced with original VYNR assets and native-only config. Location and microphone permissions are blocked explicitly.
+
+- Owner review: recognition started awaiting work before it could be cancelled, and it read consent from the screen's render. Cancellation now starts first, and consent is re-checked from storage immediately before the photo is sent. An already-cancelled request sends nothing (tested).
+- Owner review: an ambiguous generation was pre-selected. The player must now choose the generation explicitly (tested).
+- Owner review: release builds could opt into simulated recognition. They no longer can (tested).
 
 Checked and found sound: no secrets in the app bundle or repository; no location collection; no OCR anywhere; mock recognition cannot ship by accident in release builds; every AI response is validated on both client and server; and no vehicle-interaction features exist.

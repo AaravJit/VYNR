@@ -59,7 +59,7 @@ Set these as EAS environment variables (or in `.env.local` for local builds). Th
 EXPO_PUBLIC_RECOGNITION_ENDPOINT=https://<your-server-host>
 ```
 
-Release builds require `https`. If the endpoint is missing, the release build ships with manual identification only, and simulated recognition can never be switched on by accident.
+Release builds require `https`. If the endpoint is missing, the release build ships with manual identification only, and simulated recognition cannot be enabled in a release build at all.
 
 ### Build
 
