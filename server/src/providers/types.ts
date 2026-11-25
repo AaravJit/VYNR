@@ -1,3 +1,4 @@
+import type { TokenUsage } from '../limits.ts';
 import type { RecognitionResponse } from '../shared/types.ts';
 import type { ValidImage } from '../validation.ts';
 
@@ -13,5 +14,6 @@ export class UpstreamError extends Error {
 
 export interface VisionProvider {
   readonly id: string;
-  identify(image: ValidImage, signal: AbortSignal): Promise<RecognitionResponse>;
+  /** `onUsage` is called with the billed token usage of every upstream call, even one whose output is then rejected. */
+  identify(image: ValidImage, signal: AbortSignal, onUsage?: (usage: TokenUsage) => void): Promise<RecognitionResponse>;
 }

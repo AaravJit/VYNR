@@ -56,6 +56,14 @@ describe('AnthropicVisionProvider', () => {
     }
   });
 
+  it('reports billed usage even when the output is rejected', async () => {
+    const msg = { ...textMessage('not json'), usage: { input_tokens: 1200, output_tokens: 300, cache_read_input_tokens: 0 } };
+    const seen: unknown[] = [];
+    const p = new AnthropicVisionProvider({ model: 'm', client: fakeClient(() => msg).client });
+    await assert.rejects(p.identify(image, signal, (u) => seen.push(u)));
+    assert.deepEqual(seen, [{ inputTokens: 1200, outputTokens: 300 }]);
+  });
+
   it('maps SDK errors to upstream error kinds', async () => {
     const headers = new Headers();
     const cases: [Error, string][] = [

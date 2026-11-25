@@ -1,85 +1,123 @@
-/**
- * In-memory fixed-window limiters. Good for a single instance; a multi-instance
- * deployment should move these counters to a shared store (e.g. Redis). The
- * global budget is the hard cost ceiling and resets at 00:00 UTC.
- */
+import type { CounterStore } from './store.ts';
+
 export interface Clock {
   now(): number;
 }
 
 export const systemClock: Clock = { now: () => Date.now() };
 
-interface Window {
-  start: number;
-  count: number;
-}
+const utcDay = (t: number) => new Date(t).toISOString().slice(0, 10);
 
+/** Fixed-window limiter backed by a CounterStore. */
 export class WindowLimiter {
-  private readonly windows = new Map<string, Window>();
+  private readonly name: string;
   private readonly limit: number;
   private readonly windowMs: number;
+  private readonly store: CounterStore;
   private readonly clock: Clock;
 
-  constructor(limit: number, windowMs: number, clock: Clock = systemClock) {
+  constructor(name: string, limit: number, windowMs: number, store: CounterStore, clock: Clock) {
+    this.name = name;
     this.limit = limit;
     this.windowMs = windowMs;
+    this.store = store;
     this.clock = clock;
+  }
+
+  private window(now: number): number {
+    return Math.floor(now / this.windowMs) * this.windowMs;
   }
 
   /** Returns 0 if allowed (and counts the hit), otherwise seconds until retry. */
   hit(key: string): number {
     const now = this.clock.now();
-    const start = Math.floor(now / this.windowMs) * this.windowMs;
-    let w = this.windows.get(key);
-    if (!w || w.start !== start) {
-      w = { start, count: 0 };
-      this.windows.set(key, w);
+    const start = this.window(now);
+    const k = `${this.name}:${key}`;
+    if (this.store.get(k, String(start)) >= this.limit) {
+      return Math.max(1, Math.ceil((start + this.windowMs - now) / 1000));
     }
-    if (w.count >= this.limit) return Math.max(1, Math.ceil((start + this.windowMs - now) / 1000));
-    w.count++;
+    this.store.add(k, String(start), 1);
     return 0;
   }
 
-  /** Drops expired windows so memory stays bounded. */
+  /** Drops expired windows so storage stays bounded. */
   sweep(): void {
-    const start = Math.floor(this.clock.now() / this.windowMs) * this.windowMs;
-    for (const [k, w] of this.windows) if (w.start !== start) this.windows.delete(k);
-  }
-
-  get size(): number {
-    return this.windows.size;
+    this.store.prune(`${this.name}:`, String(this.window(this.clock.now())));
   }
 }
 
+/** Hard cap on upstream calls per UTC day across all users. */
 export class DailyBudget {
-  private day = '';
-  private used = 0;
   private readonly limit: number;
+  private readonly store: CounterStore;
   private readonly clock: Clock;
 
-  constructor(limit: number, clock: Clock = systemClock) {
+  constructor(limit: number, store: CounterStore, clock: Clock) {
     this.limit = limit;
+    this.store = store;
     this.clock = clock;
   }
 
-  private roll(): void {
-    const d = new Date(this.clock.now()).toISOString().slice(0, 10);
-    if (d !== this.day) {
-      this.day = d;
-      this.used = 0;
-    }
-  }
-
   tryConsume(): boolean {
-    this.roll();
-    if (this.used >= this.limit) return false;
-    this.used++;
+    const day = utcDay(this.clock.now());
+    if (this.store.get('budget', day) >= this.limit) return false;
+    this.store.add('budget', day, 1);
     return true;
   }
 
   remaining(): number {
-    this.roll();
-    return Math.max(0, this.limit - this.used);
+    return Math.max(0, this.limit - this.store.get('budget', utcDay(this.clock.now())));
+  }
+
+  sweep(): void {
+    this.store.prune('budget', utcDay(this.clock.now()));
+  }
+}
+
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+}
+
+export interface Pricing {
+  inputUsdPerMTok: number;
+  outputUsdPerMTok: number;
+}
+
+/**
+ * Daily spend ceiling in US dollars, estimated from the token usage the AI
+ * provider reports for every call (including failed or refused ones). Once
+ * the day's estimate reaches the limit, no more upstream calls are made.
+ */
+export class SpendCeiling {
+  private readonly limitUsd: number;
+  private readonly pricing: Pricing;
+  private readonly store: CounterStore;
+  private readonly clock: Clock;
+
+  constructor(limitUsd: number, pricing: Pricing, store: CounterStore, clock: Clock) {
+    this.limitUsd = limitUsd;
+    this.pricing = pricing;
+    this.store = store;
+    this.clock = clock;
+  }
+
+  canSpend(): boolean {
+    return this.spentToday() < this.limitUsd;
+  }
+
+  spentToday(): number {
+    return this.store.get('spend', utcDay(this.clock.now()));
+  }
+
+  record(usage: TokenUsage): void {
+    const cost =
+      (usage.inputTokens * this.pricing.inputUsdPerMTok + usage.outputTokens * this.pricing.outputUsdPerMTok) / 1_000_000;
+    if (cost > 0) this.store.add('spend', utcDay(this.clock.now()), cost);
+  }
+
+  sweep(): void {
+    this.store.prune('spend', utcDay(this.clock.now()));
   }
 }
 

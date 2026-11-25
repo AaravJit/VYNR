@@ -24,9 +24,11 @@ export const okResult: RecognitionResponse = {
 export class FakeProvider implements VisionProvider {
   readonly id = 'fake';
   calls: Uint8Array[] = [];
+  usage = { inputTokens: 1000, outputTokens: 100 };
   impl: (signal: AbortSignal) => Promise<RecognitionResponse> = async () => okResult;
-  async identify(image: { jpeg: Uint8Array }, signal: AbortSignal) {
+  async identify(image: { jpeg: Uint8Array }, signal: AbortSignal, onUsage?: (u: { inputTokens: number; outputTokens: number }) => void) {
     this.calls.push(image.jpeg);
+    onUsage?.(this.usage);
     return this.impl(signal);
   }
 }
@@ -41,7 +43,7 @@ export interface Harness {
 }
 
 export async function startServer(overrides: Partial<ServerConfig> = {}, deps: Partial<AppDeps> = {}): Promise<Harness> {
-  const config = { ...loadConfig({}), ...overrides };
+  const config = { ...loadConfig({}), quotaDbPath: ':memory:', ...overrides };
   const provider = new FakeProvider();
   const logs: string[] = [];
   const clock = { t: Date.UTC(2026, 10, 25, 12), now: () => clock.t };

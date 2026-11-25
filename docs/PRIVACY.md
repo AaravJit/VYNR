@@ -38,7 +38,7 @@ The AI provider (Anthropic) processes the image under its API terms. Check its c
 - The app contains no secrets. `EXPO_PUBLIC_*` values (recognition mode and endpoint) are public by design.
 - The Anthropic API key exists only in the server's environment.
 - Requests carry an anonymous install id: the first 32 hex characters of SHA-256(`vynr-rate-limit:` + random player id). It cannot be linked back to the player and is used only for rate limiting.
-- Cost controls stack: 40 automatic identifications per device per day in the app; per-install and per-IP minute and day limits on the server; a concurrency cap; a global daily request budget; and a monthly spend limit you set in the Anthropic console.
+- Cost controls stack: 40 automatic identifications per device per day in the app; per-install and per-IP minute and day limits on the server; a concurrency cap; a global daily request budget and a daily spend ceiling in dollars, both kept across restarts; and a monthly spend limit you set in the Anthropic console.
 - Every request and response is validated on both sides. The client treats the server as untrusted, and the server treats the model as untrusted.
 - **Limitation:** the install id is not device attestation. A determined attacker can rotate ids, which is why the per-IP and global limits exist. For a public launch, add App Attest (iOS) or Play Integrity (Android). See TASKS.md.
 

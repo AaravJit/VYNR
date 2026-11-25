@@ -10,7 +10,7 @@ Status as of 25 November 2026: **MVP feature-complete and verified in automated 
 | Lint | `npm run lint` | Pass, 0 warnings |
 | App tests | `npm test` | **99/99 pass** in 9 suites |
 | Server type check | `npm --prefix server run typecheck` | Pass |
-| Server tests | `npm --prefix server test` | **26/26 pass** |
+| Server tests | `npm --prefix server test` | **31/31 pass** |
 | Native bundles | `npm run export:check` | iOS and Android Hermes bundles build |
 | Server smoke test | start with and without a key, call `/health` and `/v1/recognize` | Refuses to start without a key; health and validation respond correctly |
 
@@ -62,7 +62,7 @@ Run on a physical iPhone and Android phone before release:
 - **Honor system for manual picks.** A player can photograph anything and choose any catalog vehicle. Duplicate decay, the cooldown and a finite catalog bound the impact. Fine for single-player; must be solved before leaderboards.
 - **The simulated provider ignores the photo.** It exists only to test the loop.
 - **The install id is not attestation.** Per-IP and global limits are the real abuse boundary.
-- **Server limits are in memory.** Single instance only; counters reset on restart.
+- **Server counters are per instance.** They persist in a local SQLite file across restarts, but several replicas would each count separately; that needs a shared store such as Redis.
 - **Catalog years are approximate** and need a human review.
 - **No account or cloud backup.** Uninstalling the app loses progress unless the player exported it.
 - **No repository licence** has been chosen.

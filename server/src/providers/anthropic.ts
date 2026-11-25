@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { bytesToBase64 } from '../shared/jpeg.ts';
 import type { RecognitionResponse } from '../shared/types.ts';
 import { parseRecognitionResponse } from '../shared/validate.ts';
+import type { TokenUsage } from '../limits.ts';
 import type { ValidImage } from '../validation.ts';
 import { UpstreamError, type VisionProvider } from './types.ts';
 
@@ -71,7 +72,7 @@ export class AnthropicVisionProvider implements VisionProvider {
     this.client = opts.client ?? new Anthropic({ apiKey: opts.apiKey, maxRetries: 1 });
   }
 
-  async identify(image: ValidImage, signal: AbortSignal): Promise<RecognitionResponse> {
+  async identify(image: ValidImage, signal: AbortSignal, onUsage?: (usage: TokenUsage) => void): Promise<RecognitionResponse> {
     let message;
     try {
       message = await this.client.beta.messages.create(
@@ -96,6 +97,16 @@ export class AnthropicVisionProvider implements VisionProvider {
       );
     } catch (err) {
       throw mapSdkError(err);
+    }
+
+    if (message.usage) {
+      onUsage?.({
+        inputTokens:
+          (message.usage.input_tokens ?? 0) +
+          (message.usage.cache_creation_input_tokens ?? 0) +
+          (message.usage.cache_read_input_tokens ?? 0),
+        outputTokens: message.usage.output_tokens ?? 0,
+      });
     }
 
     if (message.stop_reason === 'refusal') throw new UpstreamError('refused', 'The model declined this image');

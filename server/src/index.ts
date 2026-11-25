@@ -3,6 +3,7 @@ import { createServer } from 'node:http';
 import { createApp } from './app.ts';
 import { loadConfig } from './config.ts';
 import { AnthropicVisionProvider } from './providers/anthropic.ts';
+import { SqliteCounterStore } from './store.ts';
 
 const config = loadConfig();
 if (!config.anthropicApiKey) {
@@ -11,7 +12,8 @@ if (!config.anthropicApiKey) {
 }
 
 const provider = new AnthropicVisionProvider({ apiKey: config.anthropicApiKey, model: config.model });
-const app = createApp({ config, provider });
+const store = new SqliteCounterStore(config.quotaDbPath);
+const app = createApp({ config, provider, store });
 const server = createServer({ requestTimeout: 60_000, headersTimeout: 15_000 }, (req, res) => {
   void app.handle(req, res);
 });
@@ -25,7 +27,10 @@ server.listen(config.port, config.host, () => {
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.on(signal, () => {
-    server.close(() => process.exit(0));
+    server.close(() => {
+      store.close();
+      process.exit(0);
+    });
     setTimeout(() => process.exit(0), 10_000).unref();
   });
 }

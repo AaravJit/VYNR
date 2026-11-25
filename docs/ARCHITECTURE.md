@@ -67,7 +67,7 @@ Request pipeline for `POST /v1/recognize`:
 2. Rate limits: per IP per minute and day, then per install per minute and day. Returns 429 with `Retry-After`.
 3. Body size cap (streamed, 413). Strict validation of `{image, width, height}`: base64, JPEG magic bytes, dimension bounds.
 4. Metadata is stripped again on the server, so EXIF, GPS and ICC data never reach the AI provider.
-5. A concurrency cap and a global daily request budget (503 when spent) bound the cost.
+5. A concurrency cap, a global daily request budget and a daily dollar spend ceiling (503 when reached) bound the cost. Counters persist in SQLite so restarts do not reset them.
 6. Claude call with structured JSON output, low effort, and server-side fallback models. Refusals, truncation and invalid JSON are rejected. The output is validated with the same validator as the app.
 7. Responses carry `no-store` and `nosniff`. Logs contain only method, path, status and duration: no ids, IPs or image data.
 

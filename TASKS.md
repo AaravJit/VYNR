@@ -11,7 +11,7 @@
 - [x] Recognition server: validation, metadata stripping, per-install and per-IP limits, global daily budget, concurrency cap, structured Claude output, no logging of personal data
 - [x] Client-side daily recognition cap and consent gate
 - [x] Error boundary, loading, empty and failure states, accessibility labels
-- [x] Tests: 90 app tests (unit, real-SQLite integration, UI) and 26 server tests
+- [x] Tests: 99 app tests (unit, real-SQLite integration, UI) and 31 server tests
 - [x] Original icon, splash and adaptive icons
 - [x] Docs: README, architecture, privacy, data provenance, deployment
 
@@ -31,7 +31,7 @@ Priority order:
 
 1. **On-device plate and face blurring** before upload (for example a small detection model through a native module). Highest privacy value.
 2. **Device attestation** (App Attest, Play Integrity) on recognition requests, replacing the anonymous install id as the abuse boundary.
-3. **Shared rate-limit store** (Redis or similar) so the server can run more than one instance.
+3. **Shared rate-limit store** (Redis or similar) so the server can run more than one instance. Counters already survive restarts on a single instance.
 4. **Identification integrity for multiplayer**: server-verified sightings before any leaderboard. Today, manual picks are trusted.
 5. Expand the catalog (more generations, more makes, regional models), with a review process.
 6. Optional cloud backup and sync using the export format.

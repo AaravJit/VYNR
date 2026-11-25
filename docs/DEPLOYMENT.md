@@ -20,9 +20,11 @@ All settings are environment variables. The full list with defaults is in `serve
 | `GLOBAL_DAILY_REQUEST_BUDGET` | 2000 | Hard cap on AI calls per UTC day across everyone. Size it to your budget |
 | `RATE_PER_INSTALL_PER_DAY` | 50 | Per device |
 | `RATE_PER_IP_PER_DAY` | 300 | Per IP address |
+| `DAILY_SPEND_LIMIT_USD` | 20 | Daily cost ceiling, estimated from reported token usage. Update `PRICE_*` if you change the model |
+| `QUOTA_DB_PATH` | `./data/quota.db` | Where counters persist. Put it on a persistent volume |
 | `TRUST_PROXY` | off | Turn on only behind a reverse proxy that appends `X-Forwarded-For`, otherwise clients can spoof their IP |
 
-Limits are kept in memory per instance and the daily budget resets on restart. Run a **single instance**, or move the counters to a shared store such as Redis before scaling out.
+Rate-limit, budget and spend counters are stored in a SQLite file (`QUOTA_DB_PATH`, default `./data/quota.db`; the Docker image declares `/app/data` as a volume), so they survive restarts and redeploys as long as that file is kept. The server also stops calling the AI once the day's estimated spend reaches `DAILY_SPEND_LIMIT_USD` (default $20), based on the token usage reported for every call. The file belongs to one instance: run a **single instance**, or move the counters to a shared store such as Redis before scaling out.
 
 ### Run
 

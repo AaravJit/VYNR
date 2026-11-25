@@ -18,6 +18,20 @@ export interface ServerConfig {
   upstreamTimeoutMs: number;
   /** Trust the first X-Forwarded-For hop (only behind a known reverse proxy). */
   trustProxy: boolean;
+  /** SQLite file for limits, budget and spend (':memory:' disables persistence). */
+  quotaDbPath: string;
+  /** Daily spend ceiling in USD, estimated from reported token usage. */
+  dailySpendLimitUsd: number;
+  inputUsdPerMTok: number;
+  outputUsdPerMTok: number;
+}
+
+function num(env: NodeJS.ProcessEnv, key: string, fallback: number): number {
+  const raw = env[key];
+  if (raw === undefined || raw === '') return fallback;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) throw new Error(`${key} must be a number >= 0`);
+  return n;
 }
 
 function int(env: NodeJS.ProcessEnv, key: string, fallback: number, min = 0): number {
@@ -45,5 +59,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     maxConcurrent: int(env, 'MAX_CONCURRENT_UPSTREAM', 8, 1),
     upstreamTimeoutMs: int(env, 'UPSTREAM_TIMEOUT_MS', 20_000, 1000),
     trustProxy: env.TRUST_PROXY === '1' || env.TRUST_PROXY === 'true',
+    quotaDbPath: env.QUOTA_DB_PATH?.trim() || './data/quota.db',
+    dailySpendLimitUsd: num(env, 'DAILY_SPEND_LIMIT_USD', 20),
+    // List price of the default model; set these to match RECOGNITION_MODEL if you change it.
+    inputUsdPerMTok: num(env, 'PRICE_INPUT_USD_PER_MTOK', 4),
+    outputUsdPerMTok: num(env, 'PRICE_OUTPUT_USD_PER_MTOK', 20),
   };
 }

@@ -1,7 +1,8 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
 import type { ServerConfig } from './config.ts';
-import { type Clock, DailyBudget, Semaphore, systemClock, WindowLimiter } from './limits.ts';
+import { type Clock, DailyBudget, Semaphore, SpendCeiling, systemClock, WindowLimiter } from './limits.ts';
+import { type CounterStore, MemoryCounterStore } from './store.ts';
 import { UpstreamError, type VisionProvider } from './providers/types.ts';
 import { INSTALL_ID_PATTERN, parseRecognizeRequest, RequestError } from './validation.ts';
 
@@ -12,6 +13,8 @@ export interface AppDeps {
   provider: VisionProvider;
   clock?: Clock;
   log?: Logger;
+  /** Defaults to in-memory counters; production passes a SqliteCounterStore. */
+  store?: CounterStore;
 }
 
 const MINUTE = 60_000;
@@ -88,17 +91,25 @@ export function createApp(deps: AppDeps) {
   const clock = deps.clock ?? systemClock;
   const log = deps.log ?? ((line: string) => console.log(line));
 
-  const installMinute = new WindowLimiter(config.perInstallPerMinute, MINUTE, clock);
-  const installDay = new WindowLimiter(config.perInstallPerDay, DAY, clock);
-  const ipMinute = new WindowLimiter(config.perIpPerMinute, MINUTE, clock);
-  const ipDay = new WindowLimiter(config.perIpPerDay, DAY, clock);
-  const budget = new DailyBudget(config.globalDailyBudget, clock);
+  const store = deps.store ?? new MemoryCounterStore();
+
+  const installMinute = new WindowLimiter('im', config.perInstallPerMinute, MINUTE, store, clock);
+  const installDay = new WindowLimiter('id', config.perInstallPerDay, DAY, store, clock);
+  const ipMinute = new WindowLimiter('pm', config.perIpPerMinute, MINUTE, store, clock);
+  const ipDay = new WindowLimiter('pd', config.perIpPerDay, DAY, store, clock);
+  const budget = new DailyBudget(config.globalDailyBudget, store, clock);
+  const spend = new SpendCeiling(
+    config.dailySpendLimitUsd,
+    { inputUsdPerMTok: config.inputUsdPerMTok, outputUsdPerMTok: config.outputUsdPerMTok },
+    store,
+    clock,
+  );
   const concurrency = new Semaphore(config.maxConcurrent);
   // Base64 inflates by 4/3; allow a little room for the JSON wrapper.
   const maxBodyBytes = Math.ceil((config.maxImageBytes * 4) / 3) + 1024;
 
   function sweep(): void {
-    for (const l of [installMinute, installDay, ipMinute, ipDay]) l.sweep();
+    for (const l of [installMinute, installDay, ipMinute, ipDay, budget, spend]) l.sweep();
   }
 
   async function recognize(req: IncomingMessage, res: ServerResponse): Promise<number> {
@@ -151,7 +162,7 @@ export function createApp(deps: AppDeps) {
       return 429;
     }
     try {
-      if (!budget.tryConsume()) {
+      if (!spend.canSpend() || !budget.tryConsume()) {
         send(res, 503, { error: 'daily_budget_exhausted' }, { 'Retry-After': '3600' });
         return 503;
       }
@@ -162,7 +173,7 @@ export function createApp(deps: AppDeps) {
       };
       res.on('close', onClose);
       try {
-        const result = await provider.identify(image, controller.signal);
+        const result = await provider.identify(image, controller.signal, (usage) => spend.record(usage));
         send(res, 200, result);
         return 200;
       } catch (err) {
@@ -210,5 +221,5 @@ export function createApp(deps: AppDeps) {
     log(`${req.method} ${path} ${status} ${clock.now() - started}ms`);
   }
 
-  return { handle, sweep, budget };
+  return { handle, sweep, budget, spend };
 }
