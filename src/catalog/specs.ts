@@ -1,4 +1,8 @@
+import { isApproved } from './dataSources';
 import { SPEC_ACCESSED, SPECS } from './specs.data';
+
+/** The licensing register entry that governs every record in specs.data.ts. */
+export const SPECS_SOURCE = 'wikipedia-specs-2026-11' as const;
 
 /**
  * Verified factory specifications per catalog generation.
@@ -38,7 +42,14 @@ export interface VehicleSpecs {
 
 export { SPEC_ACCESSED };
 
+/** Returns specs only when their source is approved in the licensing register; quarantined data is never shown. */
 export function getSpecs(vehicleId: string): VehicleSpecs | undefined {
+  if (!isApproved(SPECS_SOURCE)) return undefined;
+  return SPECS[vehicleId];
+}
+
+/** For audits and tests only: the stored record regardless of approval. Never render this. */
+export function getQuarantinedSpecs(vehicleId: string): VehicleSpecs | undefined {
   return SPECS[vehicleId];
 }
 

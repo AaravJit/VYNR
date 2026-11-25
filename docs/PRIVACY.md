@@ -16,7 +16,7 @@ The app asks for camera permission only. It has no location permission (location
 
 ## What happens to a photo
 
-1. **Faces and plates are pixelated on the phone first.** The local module `modules/vynr-redaction` finds faces (Apple Vision `VNDetectFaceRectanglesRequest` on iOS, ML Kit face detection on Android) and text-like regions such as number plates (Vision text *rectangles* on iOS, ML Kit text-recognition *bounding boxes* on Android), pads each box by 18% and pixelates it. Plate text is never read or stored; only box positions are used, and only for this one image. Text regions larger than 20% of the frame are skipped, because they are usually signage rather than plates.
+1. **Faces and plates are pixelated on the phone first.** After the image is downscaled to 1024 px, Google ML Kit face detection and text recognition run on the device (`src/services/redaction.ts`). Only bounding boxes are kept; every recognised string is discarded immediately and is never stored, logged or sent. Each box is padded (30% for faces, 25% for text) and pixelated in pure JavaScript (`src/services/pixelate.ts`), then metadata is stripped again. ML Kit runs offline; images are never sent to Google for detection.
    - If the module is missing (for example in Expo Go) or fails, the scan is marked *not blurred*: it is **never uploaded and never kept**. The player identifies the car from the catalog instead.
    - The report shows a chip with what happened ("2 areas blurred", "Checked · nothing to blur" or "Not blurred · stays on phone").
 2. The capture is resized to at most 1024 px on the longest edge and re-encoded as JPEG at quality 0.7. This keeps enough detail to recognise a car's shape while making small text much harder to read.

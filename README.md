@@ -21,7 +21,7 @@ If Expo Go's bundled native modules do not match this SDK, build the app locally
 npx expo run:ios        # or: npx expo run:android
 ```
 
-**Face and plate blurring needs a development build.** It is a local native module (`modules/vynr-redaction`), which Expo Go cannot load. In Expo Go every scan is marked "not blurred", so photos are never uploaded or kept and you identify cars from the catalog (or use the simulated provider).
+**Face and plate blurring needs a development build.** It uses Google ML Kit through maintained Expo modules (`@infinitered/react-native-mlkit-*`), which Expo Go cannot load. In Expo Go every scan is marked "not blurred", so photos are never uploaded or kept and you identify cars from the catalog (or use the simulated provider).
 
 To install on a phone without a local toolchain, use an EAS internal build: `npx eas-cli@latest build --profile preview`.
 
@@ -57,7 +57,6 @@ Release builds never fall back to simulation. With no server configured they off
 | `src/services/` | Game service, image preparation and metadata stripping, data export |
 | `src/state/` | App store (SQLite-backed) and scan session |
 | `src/components/`, `src/theme/` | UI kit and design tokens |
-| `modules/vynr-redaction/` | Local Expo module: on-device face and plate pixelation (iOS Vision, Android ML Kit) |
 | `server/` | Recognition server (Node, no framework), plus the recognition benchmark in `server/scripts/` |
 | `.github/` | CI, the Claude review workflow and CODEOWNERS |
 | `test/` | Unit, integration (real SQLite) and UI tests |

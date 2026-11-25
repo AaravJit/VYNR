@@ -3,9 +3,9 @@ import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 
 import type { PreparedImage } from '@/recognition/types';
 
-import { VynrRedaction } from '../../modules/vynr-redaction';
-
 import { base64ToBytes, bytesToBase64, stripJpegMetadata } from './jpeg';
+import { pixelateJpeg } from './pixelate';
+import { mlKitDetector, type RegionDetector, RedactionUnavailableError } from './redaction';
 
 /** Longest edge sent for recognition. Enough detail for make/model, too little for reading small text. */
 export const RECOGNITION_MAX_EDGE = 1024;
@@ -18,12 +18,12 @@ async function render(uri: string, width: number, height: number, maxEdge: numbe
   }
   const ref = await ctx.renderAsync();
   const saved = await ref.saveAsync({ format: SaveFormat.JPEG, compress, base64: true });
-  // The encoder also writes a cache file; we only need the in-memory bytes.
-  deleteFileQuietly(saved.uri);
-  if (!saved.base64) throw new Error('Image encoding failed');
-  // Defence in depth: the re-encode above should already drop EXIF/GPS, but strip again.
-  const clean = bytesToBase64(stripJpegMetadata(base64ToBytes(saved.base64)));
-  return { base64: clean, width: saved.width, height: saved.height };
+  if (!saved.base64) {
+    deleteFileQuietly(saved.uri);
+    throw new Error('Image encoding failed');
+  }
+  // The caller deletes `uri` once it no longer needs the file (detection reads it first).
+  return { uri: saved.uri, base64: saved.base64, width: saved.width, height: saved.height };
 }
 
 export function deleteFileQuietly(uri: string | null | undefined): void {
@@ -51,41 +51,50 @@ export interface CapturedPhoto extends PreparedImage {
 /**
  * Converts a raw camera capture into a recognition-ready image:
  *
- * 1. Faces and text-like regions (number plates) are pixelated on device at full
- *    resolution by the native VynrRedaction module. No text is read.
- * 2. The result is downscaled, re-encoded and metadata-stripped.
+ * 1. Downscale to 1024 px and re-encode (drops EXIF and GPS).
+ * 2. Detect faces and text regions (which include number plates) on the device
+ *    with ML Kit. Only bounding boxes are used; any recognised text is discarded.
+ * 3. Pixelate every region in pure JavaScript, then strip metadata again.
  *
  * The original capture and every intermediate file are deleted immediately.
- * When redaction is unavailable or fails, the photo is still prepared for the
- * on-screen preview, but `redaction.status` says so and callers must not upload
- * or keep it (the identify screen and saveThumbnail both enforce this).
+ * If detection is unavailable or fails, `redaction.status` says so, the
+ * returned image is the unredacted preview, and callers must not upload or keep
+ * it (fail closed; the identify screen, the live scanner and saveThumbnail all check).
  */
-export async function prepareForRecognition(captureUri: string, width: number, height: number): Promise<CapturedPhoto> {
-  let redactedUri: string | null = null;
-  let redaction: RedactionSummary = { status: 'unavailable', faces: 0, plates: 0 };
+export async function prepareForRecognition(
+  captureUri: string,
+  width: number,
+  height: number,
+  detector: RegionDetector = mlKitDetector(),
+): Promise<CapturedPhoto> {
+  let encodedUri: string | null = null;
   try {
-    let source = { uri: captureUri, width, height };
-    if (VynrRedaction) {
-      try {
-        const r = await VynrRedaction.redact(captureUri);
-        redactedUri = r.uri;
-        source = { uri: r.uri, width: r.width, height: r.height };
-        redaction = { status: 'redacted', faces: r.faces, plates: r.textRegions };
-      } catch {
-        redaction = { status: 'failed', faces: 0, plates: 0 };
-      }
+    const encoded = await render(captureUri, width, height, RECOGNITION_MAX_EDGE, 0.85);
+    encodedUri = encoded.uri;
+    let redaction: RedactionSummary;
+    let bytes = base64ToBytes(encoded.base64);
+    try {
+      const regions = await detector.detect(encoded.uri);
+      bytes = pixelateJpeg(bytes, regions, 70);
+      redaction = {
+        status: 'redacted',
+        faces: regions.filter((r) => r.kind === 'face').length,
+        plates: regions.filter((r) => r.kind === 'text').length,
+      };
+    } catch (e) {
+      redaction = { status: e instanceof RedactionUnavailableError ? 'unavailable' : 'failed', faces: 0, plates: 0 };
     }
-    const out = await render(source.uri, source.width, source.height, RECOGNITION_MAX_EDGE, 0.7);
+    const base64 = bytesToBase64(stripJpegMetadata(bytes));
     return {
-      base64: out.base64,
-      width: out.width,
-      height: out.height,
-      previewUri: `data:image/jpeg;base64,${out.base64}`,
+      base64,
+      width: encoded.width,
+      height: encoded.height,
+      previewUri: `data:image/jpeg;base64,${base64}`,
       redaction,
     };
   } finally {
     deleteFileQuietly(captureUri);
-    deleteFileQuietly(redactedUri);
+    deleteFileQuietly(encodedUri);
   }
 }
 
@@ -101,8 +110,9 @@ export async function saveThumbnail(prepared: PreparedImage, encounterId: string
   await tmp.write(base64ToBytes(prepared.base64));
   try {
     const out = await render(tmp.uri, prepared.width, prepared.height, THUMBNAIL_MAX_EDGE, 0.6);
+    deleteFileQuietly(out.uri);
     const dest = new File(photosDir(), `${encounterId}.jpg`);
-    await dest.write(base64ToBytes(out.base64));
+    await dest.write(stripJpegMetadata(base64ToBytes(out.base64)));
     return dest.uri;
   } finally {
     deleteFileQuietly(tmp.uri);

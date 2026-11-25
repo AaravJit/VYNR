@@ -62,7 +62,7 @@ Run on a physical iPhone and Android phone before release:
 ## Known limitations
 
 - **Not run on a device or simulator yet.** Layout, camera start-up time, haptics, sounds and performance on real hardware are unverified.
-- **Redaction module not compiled or device-tested.** It fails closed (no upload, no thumbnail) if it does not load, but detection quality (missed small or angled plates, faces in profile) is unmeasured. The Android ML Kit versions in `modules/vynr-redaction/android/build.gradle` need confirming at first build.
+- **Redaction not device-tested.** Detection uses ML Kit face detection and text recognition (bounding boxes only) through maintained Expo modules; pixelation is pure JavaScript and unit-tested. It fails closed (no upload, no thumbnail) when detection is unavailable, but detection quality (small or angled plates, faces in profile) is unmeasured.
 - **Live AI not exercised and accuracy unmeasured.** The benchmark has not been run, so confidence bands are self-reported, not calibrated.
 - **Specs cover 66 of 133 generations**, transcribed from Wikipedia with AI assistance and spot-checked; they need a human review before release (docs/DATA_PROVENANCE.md).
 - **Cost figures are estimates** from published prices, not measured.
