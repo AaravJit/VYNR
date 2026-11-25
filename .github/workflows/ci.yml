@@ -1,0 +1,38 @@
+# Untrusted PR code runs here, so this workflow gets no secrets and a read-only token.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22.18'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
+      - run: npm ci
+      - run: npm --prefix server ci
+      - name: Typecheck, lint, app tests, server tests
+        run: npm run verify
+      - name: Generated spec data is up to date
+        run: npm run build:specs && git diff --exit-code src/catalog/specs.data.ts
+      - name: Bundle export (iOS and Android)
+        run: npm run export:check

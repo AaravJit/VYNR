@@ -54,6 +54,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "jest",
+    "build:specs": "node scripts/build-specs.mjs && prettier --write src/catalog/specs.data.ts",
     "test:server": "npm --prefix server run typecheck && npm --prefix server test",
     "verify": "npm run typecheck && npm run lint && npm test -- --ci && npm run test:server",
     "export:check": "expo export --platform ios --platform android --output-dir dist"

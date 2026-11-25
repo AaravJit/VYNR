@@ -200,8 +200,15 @@ export default function Profile() {
         <SettingRow label="Haptics" description="Subtle vibration feedback." value={state.settings.hapticsEnabled} onChange={set('hapticsEnabled')} />
         <Divider />
         <SettingRow
+          label="Sounds"
+          description="Shutter and discovery sounds. They follow your phone’s silent switch."
+          value={state.settings.soundEnabled}
+          onChange={set('soundEnabled')}
+        />
+        <Divider />
+        <SettingRow
           label="Keep photo thumbnails"
-          description="Save a small, metadata-free thumbnail of confirmed encounters on this device. Off by default."
+          description="Save a small, metadata-free thumbnail of confirmed encounters on this device, only after faces and plates were blurred. Off by default."
           value={state.settings.keepPhotos}
           onChange={set('keepPhotos')}
         />

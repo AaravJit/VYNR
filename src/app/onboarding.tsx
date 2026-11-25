@@ -13,7 +13,7 @@ const SAFETY_RULES: { icon: IconName; title: string; body: string }[] = [
   { icon: 'alert', title: 'Never scan while driving', body: 'Only use VYNR as a pedestrian or a parked passenger.' },
   { icon: 'shield', title: 'Stay on public ground', body: 'Do not enter private property, closed lots or restricted areas for a photo.' },
   { icon: 'lock', title: 'Hands off', body: 'Never touch, lean on or approach a vehicle closely. Respect owners and staff.' },
-  { icon: 'scan', title: 'Vehicles, not people', body: 'Frame the car, not its occupants. VYNR never reads number plates.' },
+  { icon: 'scan', title: 'Vehicles, not people', body: 'Frame the car, not its occupants. Faces and plates are blurred on your phone.' },
 ];
 
 const STEPS = 5;
@@ -119,6 +119,9 @@ export default function Onboarding() {
               </Txt>
               <Txt variant="body" color={colors.textMuted}>
                 • VYNR never collects your location and never reads number plates.
+              </Txt>
+              <Txt variant="body" color={colors.textMuted}>
+                • Faces and number plates are pixelated on your phone before a photo is uploaded or kept. If that cannot run, the photo stays on the phone.
               </Txt>
               <Txt variant="body" color={colors.textMuted}>
                 • Photos are downscaled and stripped of metadata. They are discarded after identification unless you

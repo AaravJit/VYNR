@@ -45,14 +45,15 @@ export default function Scanner() {
     return () => sub.remove();
   }, []);
 
-  // Coming back to the scanner always resets it for the next shot.
+  // Coming back to the scanner always resets it for the next shot; leaving it turns the torch off.
+  const [wasFocused, setWasFocused] = useState(focused);
+  if (focused !== wasFocused) {
+    setWasFocused(focused);
+    if (focused) setPhase('idle');
+    else setTorch(false);
+  }
   useEffect(() => {
-    if (focused) {
-      captureLock.current = false;
-      setPhase('idle');
-    } else {
-      setTorch(false);
-    }
+    if (focused) captureLock.current = false;
   }, [focused]);
 
   const active = focused && foreground;

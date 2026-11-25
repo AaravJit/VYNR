@@ -22,6 +22,7 @@ jest.mock('expo-router', () => ({
 }));
 jest.mock('@/db/expoDriver', () => ({ ExpoSqlDriver: { open: jest.fn() } }));
 jest.mock('@/services/imageService', () => ({ saveThumbnail: jest.fn(), deleteAllPhotos: jest.fn() }));
+jest.mock('@/services/sound', () => ({ playSound: jest.fn() }));
 jest.mock('@/recognition/config', () => ({
   ...jest.requireActual('@/recognition/config'),
   appRecognitionConfig: () => ({ mode: 'remote', endpoint: 'https://recognition.example.com' }),
@@ -34,6 +35,7 @@ beforeEach(() => {
     id: 'remote-scan',
     image: { base64: '/9j/AAAA', width: 800, height: 600 },
     previewUri: null,
+    redaction: { status: 'redacted', faces: 0, plates: 1 },
     result: null,
     createdAt: Date.now(),
   });
@@ -77,7 +79,7 @@ it('calls the recognition service once consent is granted', async () => {
   );
   await fireEvent.press(await screen.findByLabelText('Allow cloud identification'));
   expect(await screen.findByText('AI PREDICTION')).toBeTruthy();
-  expect(screen.getByText('93% · High confidence')).toBeTruthy();
+  expect(screen.getByText('Strong match')).toBeTruthy();
   expect(mockFetch).toHaveBeenCalledTimes(1);
   expect(await s.recognitionAllowance()).toBe(CLIENT_DAILY_RECOGNITION_LIMIT - 1);
 });
@@ -133,4 +135,26 @@ it('does not upload after the screen is closed mid-start', async () => {
   release();
   await new Promise((r) => setTimeout(r, 50));
   expect(mockFetch).not.toHaveBeenCalled();
+});
+
+it.each(['unavailable', 'failed'] as const)('never uploads a photo whose faces and plates were not blurred (%s)', async (status) => {
+  startScanSession({
+    id: 'remote-scan',
+    image: { base64: '/9j/AAAA', width: 800, height: 600 },
+    previewUri: null,
+    redaction: { status, faces: 0, plates: 0 },
+    result: null,
+    createdAt: Date.now(),
+  });
+  const s = await store(true);
+  const Identify = require('@/app/identify').default;
+  await render(
+    <AppProvider store={s}>
+      <Identify />
+    </AppProvider>,
+  );
+  expect(await screen.findByText('Photo kept on this phone')).toBeTruthy();
+  expect(mockFetch).not.toHaveBeenCalled();
+  // No allowance is consumed for a scan that never left the phone.
+  expect(await s.recognitionAllowance()).toBe(CLIENT_DAILY_RECOGNITION_LIMIT);
 });

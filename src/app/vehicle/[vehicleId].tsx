@@ -7,7 +7,9 @@ import { catalog } from '@/catalog';
 import { VehicleEmblem } from '@/components/game';
 import { Icon } from '@/components/Icon';
 import { Button, EmptyState, Panel, RarityBadge, Screen, SectionHeader, StatTile, Txt } from '@/components/ui';
+import { IntelPanel } from '@/components/Intel';
 import { VehicleFacts } from '@/components/VehicleFacts';
+import { generateIntel } from '@/domain/intel';
 import type { EncounterSource } from '@/domain/types';
 import { useAppState } from '@/state/AppProvider';
 import { colors, radius, space } from '@/theme/tokens';
@@ -83,6 +85,15 @@ export default function VehicleDetail() {
             </Txt>
           )}
           <VehicleFacts vehicle={vehicle} />
+          {/* Intel from the first discovery; older encounters (before intel existed) get one seeded by their id. */}
+          {first && (
+            <IntelPanel
+              intel={
+                first.intel ??
+                generateIntel({ vehicle, country: catalog.countryOf(vehicle), seed: `${first.id}:${vehicle.id}` })
+              }
+            />
+          )}
           <SectionHeader title="Encounter history" />
           {encounters.map((e) => (
             <Panel key={e.id} style={styles.enc}>

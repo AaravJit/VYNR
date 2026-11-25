@@ -3,8 +3,11 @@ import { useEffect, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, StyleSheet, View } from 'react-native';
 
 import { catalog, RARITY_LABELS } from '@/catalog';
+import { GradientRing } from '@/components/Brand';
 import { ContractCard, VehicleEmblem } from '@/components/game';
-import { Brackets, Button, Panel, RarityBadge, Screen, SectionHeader, Txt } from '@/components/ui';
+import { IntelPanel } from '@/components/Intel';
+import { Button, Panel, RarityBadge, Screen, SectionHeader, Txt } from '@/components/ui';
+import { playSound } from '@/services/sound';
 import { useAppState, useHaptics } from '@/state/AppProvider';
 import { getOutcome } from '@/state/scanSession';
 import { colors, rarityColors, space } from '@/theme/tokens';
@@ -24,8 +27,13 @@ export default function Discovery() {
 
   useEffect(() => {
     if (!encounter) return;
-    if (first) haptics.success();
-    else haptics.impact();
+    const rare = vehicle && vehicle.rarity !== 'common' && vehicle.rarity !== 'uncommon';
+    if (first) {
+      haptics.success();
+      playSound(rare ? 'discoveryRare' : 'discovery', state.settings.soundEnabled);
+    } else {
+      haptics.impact();
+    }
     let cancelled = false;
     void AccessibilityInfo.isReduceMotionEnabled().then((reduce) => {
       if (cancelled) return;
@@ -48,7 +56,7 @@ export default function Discovery() {
     return (
       <Screen edges={['top', 'bottom']}>
         <Txt variant="h2">Encounter not found</Txt>
-        <Button label="Back to home" onPress={() => router.replace('/')} />
+        <Button label="Back to scanner" onPress={() => router.dismissTo('/')} />
       </Screen>
     );
   }
@@ -75,11 +83,19 @@ export default function Discovery() {
         }
       >
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: accent, opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.08] }) }]} />
-        <Brackets color={accent} size={24} />
         <Txt variant="label" color={accent}>
           {vehicle ? (first ? 'NEW DISCOVERY' : `ENCOUNTER #${encounter.encounterIndex + 1}`) : 'FIELD NOTE LOGGED'}
         </Txt>
-        {vehicle && <VehicleEmblem vehicle={vehicle} size={88} />}
+        {vehicle && (
+          <View style={styles.emblem}>
+            {first && (
+              <Animated.View style={[StyleSheet.absoluteFill, styles.center, { opacity: glow, transform: [{ rotate: glow.interpolate({ inputRange: [0, 1], outputRange: ['-90deg', '0deg'] }) }] }]}>
+                <GradientRing size={120} stroke={3} />
+              </Animated.View>
+            )}
+            <VehicleEmblem vehicle={vehicle} size={88} />
+          </View>
+        )}
         <Txt variant="h1" align="center">
           {vehicle ? catalog.displayName(vehicle) : encounter.label}
         </Txt>
@@ -146,7 +162,9 @@ export default function Discovery() {
         </>
       )}
 
-      <Button label="Scan another" icon="scan" onPress={() => router.dismissTo('/')} />
+      {encounter.intel && <IntelPanel intel={encounter.intel} />}
+
+      <Button label="Continue scanning" icon="scan" onPress={() => router.dismissTo('/')} />
       {vehicle && (
         <Button
           label="View in garage"
@@ -157,7 +175,6 @@ export default function Discovery() {
           }}
         />
       )}
-      <Button label="Done" variant="ghost" onPress={() => router.replace('/')} />
     </Screen>
   );
 }
@@ -169,9 +186,11 @@ const styles = StyleSheet.create({
     gap: space.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 18,
+    borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: colors.surface,
   },
+  emblem: { width: 120, height: 120, alignItems: 'center', justifyContent: 'center' },
+  center: { alignItems: 'center', justifyContent: 'center' },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.md },
 });

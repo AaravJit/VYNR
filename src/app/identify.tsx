@@ -7,15 +7,18 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { catalog } from '@/catalog';
 import { DevModeBanner, VehicleEmblem } from '@/components/game';
 import { Icon } from '@/components/Icon';
-import { ScanOverlay } from '@/components/ScanOverlay';
+import { IntelPanel } from '@/components/Intel';
+import { AnalysisOverlay } from '@/components/ScanOverlay';
 import { Button, EmptyState, Notice, Panel, RarityBadge, Screen, SectionHeader, Txt } from '@/components/ui';
 import { VehicleFacts } from '@/components/VehicleFacts';
 import { GAME_CONFIG } from '@/domain/config';
+import { generateIntel } from '@/domain/intel';
 import { encounterXp } from '@/domain/progression';
 import type { EncounterSource } from '@/domain/types';
 import { type CatalogMatch, confidenceBand, matchCandidates } from '@/recognition/matcher';
 import { RecognitionError, userMessageFor } from '@/recognition/types';
-import { saveThumbnail } from '@/services/imageService';
+import { type RedactionSummary, saveThumbnail } from '@/services/imageService';
+import { playSound } from '@/services/sound';
 import { getRecognitionProvider, recognitionConfig, useAppState, useAppStore, useHaptics } from '@/state/AppProvider';
 import {
   clearScanSession,
@@ -29,11 +32,16 @@ import { colors, radius, space } from '@/theme/tokens';
 
 type Phase =
   | { kind: 'analysing' }
-  | { kind: 'manual'; reason: 'unconfigured' | 'no_consent' | 'quota' }
+  | { kind: 'manual'; reason: 'unconfigured' | 'no_consent' | 'quota' | 'no_redaction' }
   | { kind: 'error'; message: string }
   | { kind: 'done' };
 
-const BAND_COPY = { high: 'High confidence', medium: 'Moderate confidence', low: 'Low confidence' } as const;
+/**
+ * The model's own confidence is self-reported and has not been calibrated
+ * against a benchmark (docs/BENCHMARK.md), so it is shown only as a coarse band,
+ * never as a percentage.
+ */
+const BAND_COPY = { high: 'Strong match', medium: 'Possible match', low: 'Weak match' } as const;
 
 export default function Identify() {
   const { scanId } = useLocalSearchParams<{ scanId: string }>();
@@ -77,6 +85,9 @@ export default function Identify() {
       setPhase({ kind: 'analysing' });
       try {
         if (!provider.simulated) {
+          // Faces and plates must be pixelated on the phone before anything is uploaded. If the
+          // redaction step did not run (or failed), the photo never leaves the device.
+          if (s.redaction?.status !== 'redacted') return setPhase({ kind: 'manual', reason: 'no_redaction' });
           await store.noteRecognitionUsed();
           // Last check immediately before the photo leaves the device.
           if (stopped()) return;
@@ -87,6 +98,7 @@ export default function Identify() {
         updateScanSession(s.id, { result });
         setPhase({ kind: 'done' });
         haptics.success();
+        if (result.vehicleDetected) playSound('identified', store.getState().settings.soundEnabled);
       } catch (e) {
         if (stopped()) return;
         haptics.error();
@@ -123,6 +135,14 @@ export default function Identify() {
   const selectedMatch: CatalogMatch | undefined = match.matches.find((m) => m.vehicle.id === effectiveId);
   const isManual = !!session?.manualVehicleId && !selectedMatch;
 
+  // Simulated street intel, seeded by this scan so it is stable while the player looks at it
+  // and stored with the encounter. Lines seen in recent encounters are avoided for variety.
+  const intel = useMemo(() => {
+    if (!vehicle || !session) return null;
+    const avoid = new Set(state.encounters.slice(-10).flatMap((e) => e.intel?.observations ?? []));
+    return generateIntel({ vehicle, country: catalog.countryOf(vehicle), seed: `${session.id}:${vehicle.id}`, avoid });
+  }, [vehicle, session?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const priorEncounters = useMemo(
     () => (vehicle ? state.encounters.filter((e) => e.vehicleId === vehicle.id) : []),
     [state.encounters, vehicle],
@@ -151,7 +171,8 @@ export default function Identify() {
       else source = selectedMatch && selectedMatch === match.matches[0] ? 'ai_confirmed' : 'ai_corrected';
 
       let photoUri: string | null = null;
-      if (state.settings.keepPhotos && session.image) {
+      // Only a photo that was redacted on the phone is ever kept.
+      if (state.settings.keepPhotos && session.image && session.redaction?.status === 'redacted') {
         try {
           photoUri = await saveThumbnail(session.image, Crypto.randomUUID());
         } catch {
@@ -165,6 +186,7 @@ export default function Identify() {
         confidence: !unknownLabel && selectedMatch ? selectedMatch.confidence : null,
         provider: session.result?.provider ?? null,
         photoUri,
+        intel: unknownLabel ? null : intel,
       });
       stashOutcome(outcome);
       clearScanSession();
@@ -181,7 +203,7 @@ export default function Identify() {
   const exit = () => {
     abortRef.current?.abort();
     clearScanSession();
-    router.replace('/');
+    router.dismissTo('/');
   };
 
   if (!session) {
@@ -202,8 +224,8 @@ export default function Identify() {
       <Pressable accessibilityRole="button" accessibilityLabel="Discard scan" onPress={exit} style={styles.iconBtn}>
         <Icon name="close" size={20} />
       </Pressable>
-      <Txt variant="label" upper>
-        Identification
+      <Txt variant="label" color={colors.textMuted}>
+        SCAN REPORT
       </Txt>
       <View style={{ width: 44 }} />
     </View>
@@ -220,7 +242,15 @@ export default function Identify() {
           </Txt>
         </View>
       )}
-      {phase.kind === 'analysing' && <ScanOverlay active label="ANALYSING SILHOUETTE…" />}
+      {phase.kind === 'analysing' && <AnalysisOverlay label="READING BODY LINES…" />}
+      {session.redaction ? (
+        <View style={styles.redactionChip} accessible accessibilityLabel={redactionCopy(session.redaction)}>
+          <Icon name="shield" size={12} color={session.redaction.status === 'redacted' ? colors.success : colors.warning} />
+          <Txt variant="label" color={colors.text} style={{ fontSize: 10 }}>
+            {redactionCopy(session.redaction)}
+          </Txt>
+        </View>
+      ) : null}
     </View>
   );
 
@@ -237,7 +267,7 @@ export default function Identify() {
             RECOGNITION IN PROGRESS
           </Txt>
           <Txt variant="small" color={colors.textMuted}>
-            Matching the silhouette against the VYNR catalog…
+            Comparing the shape, lights and badges against the VYNR catalog…
           </Txt>
         </Panel>
       )}
@@ -253,18 +283,22 @@ export default function Identify() {
       {phase.kind === 'manual' && !vehicle && (
         <>
           <Notice
-            tone={phase.reason === 'quota' ? 'warning' : 'info'}
+            tone={phase.reason === 'quota' || phase.reason === 'no_redaction' ? 'warning' : 'info'}
             title={
               phase.reason === 'unconfigured'
                 ? 'Automatic identification is not configured'
                 : phase.reason === 'quota'
                   ? 'Daily identification limit reached'
-                  : 'Cloud identification is off'
+                  : phase.reason === 'no_redaction'
+                    ? 'Photo kept on this phone'
+                    : 'Cloud identification is off'
             }
             body={
               phase.reason === 'no_consent'
                 ? 'Your photo has not left this device. Identify the vehicle manually, or allow cloud identification for this and future scans.'
-                : 'Choose the vehicle from the catalog to log your encounter.'
+                : phase.reason === 'no_redaction'
+                  ? 'VYNR could not blur faces and plates on this phone, so the photo was not uploaded. Choose the vehicle from the catalog instead.'
+                  : 'Choose the vehicle from the catalog to log your encounter.'
             }
           />
           {phase.reason === 'no_consent' && (
@@ -299,8 +333,8 @@ export default function Identify() {
                 {isManual ? 'IDENTIFIED BY YOU' : session.result?.simulated ? 'SIMULATED PREDICTION' : 'AI PREDICTION'}
               </Txt>
               {selectedMatch && !isManual && (
-                <Txt variant="mono" color={colors.textMuted}>
-                  {Math.round(selectedMatch.confidence * 100)}% · {BAND_COPY[confidenceBand(selectedMatch.confidence)]}
+                <Txt variant="small" color={colors.textMuted}>
+                  {BAND_COPY[confidenceBand(selectedMatch.confidence)]}
                 </Txt>
               )}
             </View>
@@ -325,12 +359,17 @@ export default function Identify() {
               <Notice tone="warning" title="Not certain" body="Please double-check this identification or pick the correct vehicle." />
             )}
             <Txt variant="small" color={colors.textFaint}>
+              {selectedMatch && !isManual ? 'Match strength is the model’s own estimate and is not calibrated. ' : ''}
               VYNR identifies make, model and generation only. Trims and exact model years cannot be reliably determined from
               a photo and are never guessed.
             </Txt>
           </Panel>
 
+          <Button label="Register discovery" icon="check" loading={saving} onPress={() => void confirm()} />
+          <Button label="Not right? Choose another vehicle" variant="secondary" onPress={openPicker} disabled={saving} />
+
           <VehicleFacts vehicle={vehicle} />
+          {intel && <IntelPanel intel={intel} />}
 
           {xpPreview && (
             <Panel style={styles.xpRow}>
@@ -347,8 +386,6 @@ export default function Identify() {
             </Panel>
           )}
 
-          <Button label="Confirm & add to garage" icon="check" loading={saving} onPress={() => void confirm()} />
-          <Button label="Not right? Choose another vehicle" variant="secondary" onPress={openPicker} disabled={saving} />
         </>
       )}
 
@@ -386,7 +423,7 @@ export default function Identify() {
                   updateScanSession(session.id, { manualVehicleId: null, unknownLabel: null });
                   setSelectedId(m.vehicle.id);
                 }}
-                accessibilityLabel={`Select ${catalog.displayName(m.vehicle)} ${m.vehicle.generation}, ${Math.round(m.confidence * 100)} percent`}
+                accessibilityLabel={`Select ${catalog.displayName(m.vehicle)} ${m.vehicle.generation}, ${BAND_COPY[confidenceBand(m.confidence)]}`}
                 style={styles.alt}
               >
                 <VehicleEmblem vehicle={m.vehicle} size={40} />
@@ -396,8 +433,8 @@ export default function Identify() {
                     {m.vehicle.generation}
                   </Txt>
                 </View>
-                <Txt variant="mono" color={colors.textMuted}>
-                  {Math.round(m.confidence * 100)}%
+                <Txt variant="small" color={colors.textMuted}>
+                  {BAND_COPY[confidenceBand(m.confidence)]}
                 </Txt>
               </Panel>
             ))}
@@ -416,7 +453,7 @@ export default function Identify() {
               <Panel key={label} style={{ gap: space.sm }}>
                 <Txt variant="bodyStrong">{label}</Txt>
                 <Txt variant="small" color={colors.textMuted}>
-                  Prediction · {Math.round(u.confidence * 100)}% · not verified. Logging it as a field note earns{' '}
+                  AI prediction · {BAND_COPY[confidenceBand(u.confidence)].toLowerCase()} · not verified. Logging it as a field note earns{' '}
                   {GAME_CONFIG.unknownVehicleXp} XP and does not count toward collection completion.
                 </Txt>
                 <Button label="Log as field note" variant="secondary" compact disabled={saving} onPress={() => void confirm(label)} />
@@ -428,6 +465,12 @@ export default function Identify() {
       )}
     </Screen>
   );
+}
+
+function redactionCopy(r: RedactionSummary): string {
+  if (r.status !== 'redacted') return 'NOT BLURRED · STAYS ON PHONE';
+  const n = r.faces + r.plates;
+  return n === 0 ? 'CHECKED · NOTHING TO BLUR' : `${n} AREA${n === 1 ? '' : 'S'} BLURRED`;
 }
 
 const styles = StyleSheet.create({
@@ -455,6 +498,18 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   noPreview: { alignItems: 'center', justifyContent: 'center' },
+  redactionChip: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+    backgroundColor: colors.glassStrong,
+  },
   predHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 },
   xpRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   alt: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md },

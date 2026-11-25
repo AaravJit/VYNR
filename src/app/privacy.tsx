@@ -23,9 +23,18 @@ const SECTIONS: { title: string; body: string[] }[] = [
     ],
   },
   {
+    title: 'Faces and plates are blurred on your phone',
+    body: [
+      'Before a photo can be uploaded or kept, VYNR uses the phone’s own vision frameworks (Apple Vision on iOS, ML Kit on Android) to find faces and text-like areas such as number plates, and pixelates them. This happens entirely on the device.',
+      'Plates are only located, never read: VYNR does not run text recognition on them and keeps no record of where they were.',
+      'If blurring cannot run on your phone, the photo is never uploaded or saved. You can still identify the vehicle from the catalog.',
+      'The report shows how many areas were blurred. Detection is automatic and can miss a face or plate, so frame the car, not people.',
+    ],
+  },
+  {
     title: 'Cloud identification',
     body: [
-      'Only when you allow it, the processed image is sent over HTTPS to the VYNR recognition service, which forwards it to an AI vision provider and returns make, model and generation predictions.',
+      'Only when you allow it, the blurred, downscaled image is sent over HTTPS to the VYNR recognition service, which forwards it to an AI vision provider and returns make, model and generation predictions.',
       'The service does not store images and does not log request bodies. An anonymous, one-way hashed install identifier is sent so the service can enforce rate limits.',
       'You can turn cloud identification off at any time in Profile → Settings and identify vehicles manually instead.',
     ],
@@ -35,6 +44,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
     body: [
       'VYNR never requests or records your location.',
       'VYNR never reads, stores or transmits number plates, and the recognition service is instructed to ignore plates and people.',
+      'Street intel (tracker, alarm, reputation and the rest) is made-up game flavour generated on your phone. VYNR never checks, infers or reveals any real vehicle’s security, tracker, alarm, immobiliser or keys.',
       'VYNR never connects to, unlocks or communicates with any vehicle, key or vehicle electronics.',
     ],
   },

@@ -80,9 +80,16 @@ export async function rateLimitId(playerId: string): Promise<string> {
   return digest.slice(0, 32);
 }
 
+function isDevBuild(): boolean {
+  return typeof __DEV__ !== 'undefined' && __DEV__;
+}
+
 export async function getRecognitionProvider(playerId: string): Promise<RecognitionProvider | null> {
   const cfg = recognitionConfig;
   if (cfg.mode === 'unconfigured') return null;
+  // Belt and braces: config resolution already refuses mock outside development,
+  // but a simulated provider must never be constructed in a release build.
+  if (cfg.mode === 'mock' && !isDevBuild()) return null;
   const key = `${cfg.mode}:${cfg.endpoint}:${playerId}`;
   if (cachedProvider && cachedFor === key) return cachedProvider;
   cachedProvider =

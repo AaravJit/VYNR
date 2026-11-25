@@ -15,7 +15,14 @@ import { clearScanSession, getOutcome, startScanSession, updateScanSession } fro
 import { idFactory } from '../helpers/fixtures';
 import { NodeSqlDriver } from '../helpers/nodeDriver';
 
-const mockRouter = { push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true, dismissTo: jest.fn() };
+const mockRouter = {
+  push: jest.fn(),
+  replace: jest.fn(),
+  back: jest.fn(),
+  canGoBack: () => true,
+  dismissTo: jest.fn(),
+  navigate: jest.fn(),
+};
 let mockParams: Record<string, string> = {};
 
 jest.mock('expo-router', () => ({
@@ -26,7 +33,10 @@ jest.mock('expo-router', () => ({
 
 // expo-sqlite's native module is not available under Jest; the store below is injected with node:sqlite.
 jest.mock('@/db/expoDriver', () => ({ ExpoSqlDriver: { open: jest.fn() } }));
-jest.mock('@/services/imageService', () => ({ saveThumbnail: jest.fn(), deleteAllPhotos: jest.fn() }));
+const mockSaveThumbnail = jest.fn(async () => 'file:///photos/thumb.jpg');
+jest.mock('@/services/imageService', () => ({ saveThumbnail: () => mockSaveThumbnail(), deleteAllPhotos: jest.fn() }));
+const mockPlaySound = jest.fn();
+jest.mock('@/services/sound', () => ({ playSound: (...a: unknown[]) => mockPlaySound(...a) }));
 
 async function readyStore(onboard = true): Promise<AppStore> {
   const driver = NodeSqlDriver.open(':memory:');
@@ -43,28 +53,29 @@ beforeEach(() => {
   clearScanSession();
 });
 
-describe('Home', () => {
-  it('shows level, collection progress, contracts and the empty state', async () => {
+describe('Career', () => {
+  it('shows level, collection progress and the empty state, and sends the player back to the scanner', async () => {
     const store = await readyStore();
-    const Home = require('@/app/(tabs)/index').default;
+    const Career = require('@/app/(tabs)/career').default;
     await render(
       <AppProvider store={store}>
-        <Home />
+        <Career />
       </AppProvider>,
     );
     expect(await screen.findByText('Tester')).toBeTruthy();
     expect(screen.getByText('No sightings yet')).toBeTruthy();
     expect(screen.getByText(`0/${catalog.vehicles.length}`)).toBeTruthy();
     expect(screen.getByText('DEV MODE · SIMULATED RECOGNITION')).toBeTruthy();
-    await fireEvent.press(screen.getByLabelText('Open scanner'));
-    expect(mockRouter.push).toHaveBeenCalledWith('/scan');
+    await fireEvent.press(screen.getByLabelText('Start scanning'));
+    expect(mockRouter.navigate).toHaveBeenCalledWith('/');
   });
 });
 
 describe('Identify flow', () => {
   it('runs simulated recognition, shows verified catalog data and records the encounter', async () => {
     const store = await readyStore();
-    startScanSession({ id: 'scan-1', image: null, previewUri: null, result: null, createdAt: Date.now() });
+    startScanSession({ id: 'scan-1', image: null, previewUri: null,
+      redaction: null, result: null, createdAt: Date.now() });
     mockParams = { scanId: 'scan-1' };
     const Identify = require('@/app/identify').default;
     await render(
@@ -86,7 +97,7 @@ describe('Identify flow', () => {
     expect(screen.getByText('VERIFIED CATALOG RECORD')).toBeTruthy();
     expect(screen.getByText(/Trims and exact model years cannot be reliably determined/)).toBeTruthy();
 
-    await fireEvent.press(screen.getByLabelText('Confirm & add to garage'));
+    await fireEvent.press(screen.getByLabelText('Register discovery'));
     await waitFor(() => expect(mockRouter.replace).toHaveBeenCalled());
     const [arg] = mockRouter.replace.mock.calls[0];
     expect(arg.pathname).toBe('/discovery/[encounterId]');
@@ -102,6 +113,7 @@ describe('Identify flow', () => {
       id: 'scan-2',
       image: null,
       previewUri: null,
+      redaction: null,
       createdAt: Date.now(),
       result: {
         vehicleDetected: true,
@@ -119,13 +131,16 @@ describe('Identify flow', () => {
       </AppProvider>,
     );
     expect(await screen.findByText('AI PREDICTION')).toBeTruthy();
-    expect(screen.getByText('Not certain')).toBeTruthy(); // 55% → moderate confidence warning
+    expect(screen.getByText('Not certain')).toBeTruthy(); // 0.55 → moderate band warning
+    // Self-reported confidence is shown as a band, never as a percentage.
+    expect(screen.getByText('Possible match')).toBeTruthy();
+    expect(screen.queryByText(/%/)).toBeNull();
     await fireEvent.press(screen.getByLabelText('Not right? Choose another vehicle'));
     expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/catalog-picker', params: { scanId: 'scan-2' } });
 
     await act(() => updateScanSession('scan-2', { manualVehicleId: 'honda-accord-10' }));
     expect(await screen.findByText('IDENTIFIED BY YOU')).toBeTruthy();
-    await fireEvent.press(screen.getByLabelText('Confirm & add to garage'));
+    await fireEvent.press(screen.getByLabelText('Register discovery'));
     await waitFor(() => expect(store.getState().encounters).toHaveLength(1));
     expect(store.getState().encounters[0]).toMatchObject({ vehicleId: 'honda-accord-10', source: 'ai_corrected', confidence: null });
   });
@@ -136,6 +151,7 @@ describe('Identify flow', () => {
       id: 'scan-4',
       image: null,
       previewUri: null,
+      redaction: null,
       createdAt: Date.now(),
       result: {
         vehicleDetected: true,
@@ -154,12 +170,12 @@ describe('Identify flow', () => {
         <Identify />
       </AppProvider>,
     );
-    await fireEvent.press(screen.getByLabelText('Confirm & add to garage'));
+    await fireEvent.press(screen.getByLabelText('Register discovery'));
     expect(await screen.findByText('Could not save this sighting')).toBeTruthy();
     expect(store.getState().encounters).toHaveLength(0);
 
     spy.mockImplementation(real);
-    const button = screen.getByLabelText('Confirm & add to garage');
+    const button = screen.getByLabelText('Register discovery');
     await act(async () => {
       fireEvent.press(button);
       fireEvent.press(button);
@@ -175,6 +191,7 @@ describe('Identify flow', () => {
       id: 'scan-5',
       image: null,
       previewUri: null,
+      redaction: null,
       createdAt: Date.now(),
       result: {
         vehicleDetected: true,
@@ -202,6 +219,7 @@ describe('Identify flow', () => {
       id: 'scan-6',
       image: null,
       previewUri: null,
+      redaction: null,
       createdAt: Date.now(),
       result: {
         vehicleDetected: true,
@@ -219,9 +237,9 @@ describe('Identify flow', () => {
       </AppProvider>,
     );
     expect(await screen.findByText('Which generation is it?')).toBeTruthy();
-    expect(screen.queryByLabelText('Confirm & add to garage')).toBeNull();
+    expect(screen.queryByLabelText('Register discovery')).toBeNull();
     await fireEvent.press(screen.getByLabelText(/^Select Ford Mustang S650/));
-    await fireEvent.press(await screen.findByLabelText('Confirm & add to garage'));
+    await fireEvent.press(await screen.findByLabelText('Register discovery'));
     await waitFor(() => expect(store.getState().encounters).toHaveLength(1));
     expect(store.getState().encounters[0]?.vehicleId).toBe('ford-mustang-s650');
   });
@@ -229,7 +247,8 @@ describe('Identify flow', () => {
   it('runs simulated recognition on-device in development builds regardless of cloud consent', async () => {
     const store = await readyStore();
     await store.setSetting('cloudRecognitionConsent', false);
-    startScanSession({ id: 'scan-3', image: null, previewUri: null, result: null, createdAt: Date.now() });
+    startScanSession({ id: 'scan-3', image: null, previewUri: null,
+      redaction: null, result: null, createdAt: Date.now() });
     mockParams = { scanId: 'scan-3' };
     const Identify = require('@/app/identify').default;
     await render(
@@ -239,6 +258,72 @@ describe('Identify flow', () => {
     );
     // In development builds recognition is simulated on-device, so consent only gates the remote service.
     await waitFor(() => expect(screen.queryByText('RECOGNITION IN PROGRESS')).toBeNull(), { timeout: 4000 });
+  });
+
+  it('stores the simulated intel shown on the report with the encounter', async () => {
+    const store = await readyStore();
+    startScanSession({
+      id: 'scan-7',
+      image: null,
+      previewUri: null,
+      redaction: null,
+      createdAt: Date.now(),
+      result: {
+        vehicleDetected: true,
+        candidates: [{ make: 'Kia', model: 'EV6', generation: null, confidence: 0.9 }],
+        notes: null,
+        provider: 'remote',
+        simulated: false,
+      },
+    });
+    mockParams = { scanId: 'scan-7' };
+    const Identify = require('@/app/identify').default;
+    await render(
+      <AppProvider store={store}>
+        <Identify />
+      </AppProvider>,
+    );
+    expect(await screen.findByText('STREET INTEL')).toBeTruthy();
+    expect(screen.getByText('SIMULATED · FOR FUN')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Register discovery'));
+    await waitFor(() => expect(store.getState().encounters).toHaveLength(1));
+    const intel = store.getState().encounters[0]!.intel;
+    expect(intel?.seed).toBe('scan-7:kia-ev6');
+    expect(intel?.observations.length).toBeGreaterThan(0);
+  });
+
+  it.each([
+    ['unavailable', 0],
+    ['failed', 0],
+    ['redacted', 1],
+  ] as const)('keeps a photo only when it was redacted on the phone (%s)', async (status, saves) => {
+    const store = await readyStore();
+    await store.setSetting('keepPhotos', true);
+    startScanSession({
+      id: `scan-k-${status}`,
+      image: { base64: '/9j/AAAA', width: 800, height: 600 },
+      previewUri: null,
+      redaction: { status, faces: 0, plates: 0 },
+      createdAt: Date.now(),
+      result: {
+        vehicleDetected: true,
+        candidates: [{ make: 'Kia', model: 'EV6', generation: null, confidence: 0.9 }],
+        notes: null,
+        provider: 'remote',
+        simulated: false,
+      },
+    });
+    mockParams = { scanId: `scan-k-${status}` };
+    const Identify = require('@/app/identify').default;
+    await render(
+      <AppProvider store={store}>
+        <Identify />
+      </AppProvider>,
+    );
+    await fireEvent.press(await screen.findByLabelText('Register discovery'));
+    await waitFor(() => expect(store.getState().encounters).toHaveLength(1));
+    expect(mockSaveThumbnail).toHaveBeenCalledTimes(saves);
+    expect(store.getState().encounters[0]!.photoUri).toBe(saves ? 'file:///photos/thumb.jpg' : null);
   });
 
   it('explains when a scan has expired', async () => {
