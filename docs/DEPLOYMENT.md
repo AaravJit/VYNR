@@ -21,7 +21,7 @@ All settings are environment variables. The full list with defaults is in `serve
 | `RECOGNITION_ESCALATION_MODEL` | `claude-sonnet-5-5` | Second opinion only when the first answer is unsure or two models are close. `off` disables it |
 | `DAILY_SPEND_LIMIT_USD` / `MONTHLY_SPEND_LIMIT_USD` | 2 / 50 | Hard ceilings. Each call reserves its worst-case cost first, then settles the real cost |
 | `GLOBAL_DAILY_REQUEST_BUDGET` | 2000 | Hard cap on model calls per UTC day across everyone |
-| `RATE_PER_INSTALL_PER_DAY` / `RATE_PER_IP_PER_DAY` | 50 / 300 | Per device and per IP, persisted |
+| `RATE_PER_INSTALL_PER_DAY` / `RATE_PER_IP_PER_DAY` | 25 / 300 (40 per install with VYNR Black, `RATE_PER_INSTALL_PER_DAY_BLACK`; see docs/SUBSCRIPTION_ECONOMICS.md) | Per device and per IP, persisted |
 | `STATE_FILE` | `./data/vynr-state.sqlite` | Put it on the persistent volume (`/app/data` in Docker) |
 | `TRUST_PROXY` | off | Turn on only behind a reverse proxy that appends `X-Forwarded-For`, otherwise clients can spoof their IP |
 

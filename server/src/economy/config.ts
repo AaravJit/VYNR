@@ -97,6 +97,12 @@ export interface EconomyConfig {
   dailyRewardedDiscoveries: number;
   /** Rewarded repeat discoveries of the same vehicle per UTC day. */
   dailyRepeatsPerVehicle: number;
+  /**
+   * Repeat discoveries mint another collectible only for vehicles of at least
+   * this rarity, and at most once per vehicle per `cooldownDays`. First
+   * discoveries always mint. Keeps everyday cars from flooding the market.
+   */
+  repeatMint: { minRarity: Rarity; cooldownDays: number };
   /** A cloud answer can be claimed for this long after it was returned. */
   claimWindowMs: number;
   /** Deterministic alternative to crates: buy a chosen vehicle outright. */
@@ -125,11 +131,12 @@ export interface EconomyConfig {
 const DAY = 86_400_000;
 
 export const DEFAULT_ECONOMY: EconomyConfig = {
-  discoveryVc: { common: 40, uncommon: 70, rare: 140, exotic: 300, legendary: 600 },
-  repeatDiscoveryVc: { common: 6, uncommon: 10, rare: 20, exotic: 40, legendary: 80 },
+  discoveryVc: { common: 25, uncommon: 45, rare: 90, exotic: 180, legendary: 350 },
+  repeatDiscoveryVc: { common: 4, uncommon: 6, rare: 12, exotic: 25, legendary: 50 },
   discoveryXp: { common: 20, uncommon: 35, rare: 70, exotic: 150, legendary: 300 },
   dailyRewardedDiscoveries: 25,
   dailyRepeatsPerVehicle: 2,
+  repeatMint: { minRarity: 'rare', cooldownDays: 7 },
   claimWindowMs: 30 * 60_000,
   showroomVc: { common: 180, uncommon: 360, rare: 900, exotic: 2600, legendary: 7500 },
   scrapVc: { common: 10, uncommon: 20, rare: 50, exotic: 150, legendary: 400 },
@@ -147,43 +154,43 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
     maxListingsPerDay: 20,
   },
   crates: [
-    crate('street', 'Street', 'Everyday cars from every market.', 150, {
+    crate('street', 'Street', 'Everyday cars from every market.', 240, {
       categories: ['sedan', 'hatchback', 'suv', 'pickup', 'wagon', 'van'],
       rarities: ['common', 'uncommon', 'rare'],
     }, { common: 70, uncommon: 25, rare: 5 }, { after: 15, minRarity: 'rare' }),
-    crate('performance', 'Performance', 'Sports cars and coupes.', 320, { categories: ['sports', 'coupe', 'convertible'] }, {
+    crate('performance', 'Performance', 'Sports cars and coupes.', 820, { categories: ['sports', 'coupe', 'convertible'] }, {
       uncommon: 55,
       rare: 33,
       exotic: 10,
       legendary: 2,
     }, { after: 10, minRarity: 'exotic' }),
-    crate('jdm', 'JDM Legends', 'Performance icons from Japan.', 360, {
+    crate('jdm', 'JDM Legends', 'Performance icons from Japan.', 940, {
       countries: ['JP'],
       categories: ['sports', 'supercar', 'coupe', 'convertible', 'hatchback'],
       minRarity: 'uncommon',
     }, { uncommon: 50, rare: 35, exotic: 12, legendary: 3 }, { after: 10, minRarity: 'exotic' }),
-    crate('autobahn', 'Autobahn', 'German performance and grand touring.', 360, {
+    crate('autobahn', 'Autobahn', 'German performance and grand touring.', 940, {
       countries: ['DE'],
       categories: ['sports', 'coupe', 'sedan', 'supercar', 'hypercar', 'wagon'],
       minRarity: 'uncommon',
     }, { uncommon: 50, rare: 35, exotic: 12, legendary: 3 }, { after: 10, minRarity: 'exotic' }),
-    crate('muscle', 'American Muscle', 'American coupes, sports cars and trucks.', 360, {
+    crate('muscle', 'American Muscle', 'American coupes, sports cars and trucks.', 880, {
       countries: ['US'],
       categories: ['coupe', 'sports', 'supercar', 'pickup'],
       minRarity: 'uncommon',
     }, { uncommon: 55, rare: 32, exotic: 10, legendary: 3 }, { after: 10, minRarity: 'exotic' }),
-    crate('heritage', 'Heritage', 'Generations that have ended production.', 400, { endedBy: 2010 }, {
+    crate('heritage', 'Heritage', 'Generations that have ended production.', 1050, { endedBy: 2010 }, {
       common: 30,
       uncommon: 35,
       rare: 22,
       exotic: 10,
       legendary: 3,
     }, { after: 10, minRarity: 'exotic' }),
-    crate('exotic', 'Exotic', 'Supercars and hypercars.', 1000, { minRarity: 'exotic' }, { exotic: 85, legendary: 15 }, {
+    crate('exotic', 'Exotic', 'Supercars and hypercars.', 3000, { minRarity: 'exotic' }, { exotic: 85, legendary: 15 }, {
       after: 8,
       minRarity: 'legendary',
     }),
-    crate('unicorn', 'Unicorn', 'Legendary vehicles only.', 3000, { rarities: ['legendary'] }, { legendary: 100 }, null),
+    crate('unicorn', 'Unicorn', 'Legendary vehicles only.', 7000, { rarities: ['legendary'] }, { legendary: 100 }, null),
   ],
   cosmetics: [
     cosmetic('env-standard', 'garage_environment', 'Standard garage', 0),

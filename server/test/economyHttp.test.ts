@@ -80,13 +80,14 @@ describe('economy HTTP API', () => {
     const { call, account, economy } = await start();
     const { token, accountId } = await account();
     economy.operatorGrant(accountId, 400, 'test', h!.clock.now());
+    const street = economy.config.crates.find((c) => c.id === 'street')!.priceVc;
     assert.deepEqual((await call('POST', '/v1/crates/street/open', { token })).body, { error: 'idempotency_key_required' });
     const k = key();
     const a = await call('POST', '/v1/crates/street/open', { token, key: k });
     const b = await call('POST', '/v1/crates/street/open', { token, key: k });
     assert.equal(a.status, 200);
     assert.deepEqual(b.body, a.body);
-    assert.equal((await call('GET', '/v1/me', { token })).body.balance, 250);
+    assert.equal((await call('GET', '/v1/me', { token })).body.balance, 400 - street);
     const poor = await call('POST', '/v1/crates/exotic/open', { token, key: key() });
     assert.deepEqual([poor.status, poor.body.error], [402, 'insufficient_vc']);
   });

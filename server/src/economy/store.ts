@@ -386,8 +386,8 @@ export class EconomyStore {
    * Records a verified discovery: the player chose a catalog vehicle that a
    * recent cloud answer, made for this account, supports. Rewards are decided
    * here, with daily and per-vehicle limits so repeated scans cannot farm VC.
-   * A collectible is minted for the first discovery of a vehicle and at most
-   * once per vehicle per day after that.
+   * A collectible is minted for the first discovery of a vehicle; repeat
+   * sightings mint again only for rarer vehicles, at most once a week each.
    */
   claimDiscovery(accountId: string, recognitionId: string, vehicleId: string, now: number) {
     const vehicle = this.catalog.vehicle(vehicleId);
@@ -432,13 +432,17 @@ export class EconomyStore {
         .run(id, accountId, vehicleId, recognitionId, first ? 1 : 0, reward, Math.round(xp), day, now);
       const balance = reward > 0 ? this.move(accountId, reward, first ? 'discovery' : 'repeat_discovery', id, now) : this.balanceOf(accountId);
 
-      const mintedToday = this.db
-        .prepare(
-          `SELECT COUNT(*) AS n FROM collectibles c JOIN ownership_events e ON e.collectible_id = c.id AND e.kind = 'discovered'
-           WHERE e.to_account = ? AND c.vehicle_id = ? AND e.created_at >= ?`,
-        )
-        .get(accountId, vehicleId, Date.parse(`${day}T00:00:00Z`)) as { n: number };
-      const collectible = first || mintedToday.n === 0 ? this.mint(vehicle, accountId, 'discovered', 'standard', now) : null;
+      let mintRepeat = false;
+      if (!first && rarityRank(vehicle.rarity) >= rarityRank(this.cfg.repeatMint.minRarity)) {
+        const recent = this.db
+          .prepare(
+            `SELECT COUNT(*) AS n FROM collectibles c JOIN ownership_events e ON e.collectible_id = c.id AND e.kind = 'discovered'
+             WHERE e.to_account = ? AND c.vehicle_id = ? AND e.created_at > ?`,
+          )
+          .get(accountId, vehicleId, now - this.cfg.repeatMint.cooldownDays * DAY) as { n: number };
+        mintRepeat = recent.n === 0;
+      }
+      const collectible = first || mintRepeat ? this.mint(vehicle, accountId, 'discovered', 'standard', now) : null;
 
       // Season XP: doubled for vehicles matching the season theme.
       for (const s of this.activeSeasons(now)) {

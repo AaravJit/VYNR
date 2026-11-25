@@ -1,0 +1,796 @@
+{
+ "generatedBy": "server/scripts/simulate-economy.ts",
+ "params": {
+  "days": 90,
+  "players": 240,
+  "seed": 1
+ },
+ "assumptions": {
+  "sightingMix": {
+   "common": 0.62,
+   "uncommon": 0.24,
+   "rare": 0.1,
+   "exotic": 0.035,
+   "legendary": 0.005
+  },
+  "archetypes": {
+   "new": {
+    "share": 0.15,
+    "playDays": 7,
+    "dailyChance": 0.8,
+    "discoveries": 3
+   },
+   "casual": {
+    "share": 0.4,
+    "playDays": null,
+    "dailyChance": 0.3,
+    "discoveries": 3
+   },
+   "active": {
+    "share": 0.25,
+    "playDays": null,
+    "dailyChance": 0.85,
+    "discoveries": 8
+   },
+   "subscriber": {
+    "share": 0.15,
+    "playDays": null,
+    "dailyChance": 0.85,
+    "discoveries": 8
+   },
+   "farmer": {
+    "share": 0.05,
+    "playDays": null,
+    "dailyChance": 1,
+    "discoveries": 40
+   }
+  },
+  "reserveVc": 100,
+  "listAtShowroomFraction": 0.45,
+  "maxShareOfBalanceOnMarket": 0.6
+ },
+ "counters": {
+  "discoveries": 111910,
+  "rewarded": 74246,
+  "crates": 7583,
+  "showroom": 0,
+  "listings": 4764,
+  "purchases": 626,
+  "scraps": 333,
+  "errors": {
+   "trade_hold": 67,
+   "account_too_new": 12,
+   "listed": 382
+  }
+ },
+ "weekly": [
+  {
+   "day": 7,
+   "circulating": 50104,
+   "minted": 401330,
+   "spent": 350640,
+   "feesBurned": 586,
+   "collectibles": 5887,
+   "sales": 103,
+   "byType": {
+    "new": {
+     "players": 3,
+     "avgBalance": 161,
+     "avgOwned": 3,
+     "avgDiscovered": 2.7,
+     "completion": 2.3
+    },
+    "casual": {
+     "players": 85,
+     "avgBalance": 195,
+     "avgOwned": 7.4,
+     "avgDiscovered": 6,
+     "completion": 5.4
+    },
+    "active": {
+     "players": 68,
+     "avgBalance": 236,
+     "avgOwned": 50,
+     "avgDiscovered": 37.4,
+     "completion": 33.4
+    },
+    "subscriber": {
+     "players": 37,
+     "avgBalance": 256,
+     "avgOwned": 49.7,
+     "avgDiscovered": 37.4,
+     "completion": 33.9
+    },
+    "farmer": {
+     "players": 11,
+     "avgBalance": 681,
+     "avgOwned": 1,
+     "avgDiscovered": 1,
+     "completion": 0.8
+    }
+   }
+  },
+  {
+   "day": 14,
+   "circulating": 52183,
+   "minted": 687872,
+   "spent": 633840,
+   "feesBurned": 1849,
+   "collectibles": 9976,
+   "sales": 289,
+   "byType": {
+    "new": {
+     "players": 5,
+     "avgBalance": 239,
+     "avgOwned": 20,
+     "avgDiscovered": 15,
+     "completion": 14.1
+    },
+    "casual": {
+     "players": 85,
+     "avgBalance": 208,
+     "avgOwned": 15.9,
+     "avgDiscovered": 11.8,
+     "completion": 11.5
+    },
+    "active": {
+     "players": 68,
+     "avgBalance": 233,
+     "avgOwned": 81.8,
+     "avgDiscovered": 59.9,
+     "completion": 50.1
+    },
+    "subscriber": {
+     "players": 37,
+     "avgBalance": 253,
+     "avgOwned": 79.7,
+     "avgDiscovered": 58.7,
+     "completion": 49.3
+    },
+    "farmer": {
+     "players": 11,
+     "avgBalance": 737,
+     "avgOwned": 1,
+     "avgDiscovered": 1,
+     "completion": 0.8
+    }
+   }
+  },
+  {
+   "day": 21,
+   "circulating": 54800,
+   "minted": 866901,
+   "spent": 809520,
+   "feesBurned": 2581,
+   "collectibles": 12762,
+   "sales": 388,
+   "byType": {
+    "new": {
+     "players": 7,
+     "avgBalance": 233,
+     "avgOwned": 18.4,
+     "avgDiscovered": 13.9,
+     "completion": 13.2
+    },
+    "casual": {
+     "players": 85,
+     "avgBalance": 235,
+     "avgOwned": 23.6,
+     "avgDiscovered": 17.4,
+     "completion": 16.8
+    },
+    "active": {
+     "players": 68,
+     "avgBalance": 251,
+     "avgOwned": 101.5,
+     "avgDiscovered": 73.7,
+     "completion": 59.1
+    },
+    "subscriber": {
+     "players": 37,
+     "avgBalance": 201,
+     "avgOwned": 100.4,
+     "avgDiscovered": 72.8,
+     "completion": 58.6
+    },
+    "farmer": {
+     "players": 11,
+     "avgBalance": 793,
+     "avgOwned": 1,
+     "avgDiscovered": 1,
+     "completion": 0.8
+    }
+   }
+  },
+  {
+   "day": 28,
+   "circulating": 56148,
+   "minted": 1020764,
+   "spent": 961440,
+   "feesBurned": 3176,
+   "collectibles": 15134,
+   "sales": 443,
+   "byType": {
+    "new": {
+     "players": 16,
+     "avgBalance": 223,
+     "avgOwned": 15.3,
+     "avgDiscovered": 11.4,
+     "completion": 10.9
+    },
+    "casual": {
+     "players": 85,
+     "avgBalance": 224,
+     "avgOwned": 31.1,
+     "avgDiscovered": 22.7,
+     "completion": 21.6
+    },
+    "active": {
+     "players": 68,
+     "avgBalance": 239,
+     "avgOwned": 117.2,
+     "avgDiscovered": 83.5,
+     "completion": 65.5
+    },
+    "subscriber": {
+     "players": 37,
+     "avgBalance": 216,
+     "avgOwned": 115.5,
+     "avgDiscovered": 82.5,
+     "completion": 64.8
+    },
+    "farmer": {
+     "players": 11,
+     "avgBalance": 849,
+     "avgOwned": 1,
+     "avgDiscovered": 1,
+     "completion": 0.8
+    }
+   }
+  },
+  {
+   "day": 35,
+   "circulating": 56093,
+   "minted": 1143168,
+   "spent": 1083360,
+   "feesBurned": 3715,
+   "collectibles": 16990,
+   "sales": 485,
+   "byType": {
+    "new": {
+     "players": 18,
+     "avgBalance": 210,
+     "avgOwned": 19.6,
+     "avgDiscovered": 14.9,
+     "completion": 14
+    },
+    "casual": {
+     "players": 85,
+     "avgBalance": 209,
+     "avgOwned": 37.1,
+     "avgDiscovered": 27.1,
+     "completion": 25.3
+    },
+    "active": {
+     "players": 68,
+     "avgBalance": 242,
+     "avgOwned": 128.7,
+     "avgDiscovered": 89.7,
+     "completion": 69.6
+    },
+    "subscriber": {
+     "players": 37,
+     "avgBalance": 219,
+     "avgOwned": 127.7,
+     "avgDiscovered": 89.1,
+     "completion": 69.1
+    },
+    "farmer": {
+     "players": 11,
+     "avgBalance": 905,
+     "avgOwned": 1,
+     "avgDiscovered": 1,
+     "completion": 0.8
+    }
+   }
+  },
+  {
+   "day": 42,
+   "circulating": 58161,
+   "minted": 1253071,
+   "spent": 1190880,
+   "feesBurned": 4030,
+   "collectibles": 18609,
+   "sales": 509,
+   "byType": {
+    "new": {
+     "players": 19,
+     "avgBalance": 204,
+     "avgOwned": 19.5,
+     "avgDiscovered": 14.8,
+     "completion": 13.9
+    },
+    "casual": {
+     "players": 85,
+     "avgBalance": 220,
+     "avgOwned": 42.8,
+     "avgDiscovered": 31.4,
+     "completion": 28.9
+    },
+    "active": {
+     "players": 68,
+     "avgBalance": 236,
+     "avgOwned": 139.4,
+     "avgDiscovered": 94.6,
+     "completion": 72.8
+    },
+    "subscriber": {
+     "players": 37,
+     "avgBalance": 244,
+     "avgOwned": 138.1,
+     "avgDiscovered": 94.1,
+     "completion": 72.3
+    },
+    "farmer": {
+     "players": 11,
+     "avgBalance": 961,
+     "avgOwned": 1,
+     "avgDiscovered": 1,
+     "completion": 0.8
+    }
+   }
+  },
+  {
+   "day": 49,
+   "circulating": 59424,
+   "minted": 1365894,
+   "spent": 1302000,
+   "feesBurned": 4470,
+   "collectibles": 20200,
+   "sales": 532,
+   "byType": {
+    "new": {
+     "players": 20,
+     "avgBalance": 212,
+     "avgOwned": 20.1,
+     "avgDiscovered": 15.2,
+     "completion": 14.3
+    },
+    "casual": {
+     "players": 85,
+     "avgBalance": 219,
+     "avgOwned": 48.6,
+     "avgDiscovered": 35.6,
+     "completion": 32.3
+    },
+    "active": {
+     "players": 68,
+     "avgBalance": 238,
+     "avgOwned": 149.8,
+     "avgDiscovered": 98.7,
+     "completion": 75.4
+    },
+    "subscriber": {
+     "players": 37,
+     "avgBalance": 250,
+     "avgOwned": 147.8,
+     "avgDiscovered": 98,
+     "completion": 74.8
+    },
+    "farmer": {
+     "players": 11,
+     "avgBalance": 1017,
+     "avgOwned": 1,
+     "avgDiscovered": 1,
+     "completion": 0.8
+    }
+   }
+  },
+  {
+   "day": 56,
+   "circulating": 59484,
+   "minted": 1465555,
+   "spent": 1401360,
+   "feesBurned": 4711,
+   "collectibles": 21657,
+   "sales": 546,
+   "byType": {
+    "new": {
+     "players": 22,
+     "avgBalance": 208,
+     "avgOwned": 19.6,
+     "avgDiscovered": 14.8,
+     "completion": 13.9
+    },
+    "casual": {
+     "players": 85,
+     "avgBalance": 220,
+     "avgOwned": 54.3,
+     "avgDiscovered": 39.7,
+     "completion": 35.4
+    },
+    "active": {
+     "players": 68,
+     "avgBalance": 236,
+     "avgOwned": 159,
+     "avgDiscovered": 101.6,
+     "completion": 77.2
+    },
+    "subscriber": {
+     "players": 37,
+     "avgBalance": 226,
+     "avgOwned": 156.4,
+     "avgDiscovered": 100.9,
+     "completion": 76.9
+    },
+    "farmer": {
+     "players": 11,
+     "avgBalance": 1073,
+     "avgOwned": 1,
+     "avgDiscovered": 1,
+     "completion": 0.8
+    }
+   }
+  },
+  {
+   "day": 63,
+   "circulating": 60369,
+   "minted": 1550388,
+   "spent": 1485120,
+   "feesBurned": 4899,
+   "collectibles": 22963,
+   "sales": 558,
+   "byType": {
+    "new": {
+     "players": 23,
+     "avgBalance": 212,
+     "avgOwned": 19.7,
+     "avgDiscovered": 14.9,
+     "completion": 14.1
+    },
+    "casual": {
+     "players": 85,
+     "avgBalance": 225,
+     "avgOwned": 59.1,
+     "avgDiscovered": 43.1,
+     "completion": 38.1
+    },
+    "active": {
+     "players": 68,
+     "avgBalance": 234,
+     "avgOwned": 167.2,
+     "avgDiscovered": 103.9,
+     "completion": 78.7
+    },
+    "subscriber": {
+     "players": 37,
+     "avgBalance": 217,
+     "avgOwned": 165.1,
+     "avgDiscovered": 103.2,
+     "completion": 78.4
+    },
+    "farmer": {
+     "players": 11,
+     "avgBalance": 1129,
+     "avgOwned": 1,
+     "avgDiscovered": 1,
+     "completion": 0.8
+    }
+   }
+  },
+  {
+   "day": 70,
+   "circulating": 62372,
+   "minted": 1651393,
+   "spent": 1583760,
+   "feesBurned": 5261,
+   "collectibles": 24412,
+   "sales": 585,
+   "byType": {
+    "new": {
+     "players": 32,
+     "avgBalance": 209,
+     "avgOwned": 18.4,
+     "avgDiscovered": 13.5,
+     "completion": 13.1
+    },
+    "casual": {
+     "players": 85,
+     "avgBalance": 215,
+     "avgOwned": 63.6,
+     "avgDiscovered": 46.4,
+     "completion": 40.5
+    },
+    "active": {
+     "players": 68,
+     "avgBalance": 243,
+     "avgOwned": 176.1,
+     "avgDiscovered": 106.4,
+     "completion": 80.4
+    },
+    "subscriber": {
+     "players": 37,
+     "avgBalance": 212,
+     "avgOwned": 173.9,
+     "avgDiscovered": 105.3,
+     "completion": 79.8
+    },
+    "farmer": {
+     "players": 11,
+     "avgBalance": 1185,
+     "avgOwned": 1,
+     "avgDiscovered": 1,
+     "completion": 0.8
+    }
+   }
+  },
+  {
+   "day": 77,
+   "circulating": 65588,
+   "minted": 1744605,
+   "spent": 1673520,
+   "feesBurned": 5497,
+   "collectibles": 25771,
+   "sales": 608,
+   "byType": {
+    "new": {
+     "players": 35,
+     "avgBalance": 222,
+     "avgOwned": 20.3,
+     "avgDiscovered": 14.8,
+     "completion": 14.4
+    },
+    "casual": {
+     "players": 85,
+     "avgBalance": 231,
+     "avgOwned": 68.2,
+     "avgDiscovered": 49.6,
+     "completion": 42.8
+    },
+    "active": {
+     "players": 68,
+     "avgBalance": 231,
+     "avgOwned": 183.9,
+     "avgDiscovered": 108,
+     "completion": 81.5
+    },
+    "subscriber": {
+     "players": 37,
+     "avgBalance": 238,
+     "avgOwned": 182.2,
+     "avgDiscovered": 106.9,
+     "completion": 80.9
+    },
+    "farmer": {
+     "players": 11,
+     "avgBalance": 1241,
+     "avgOwned": 1,
+     "avgDiscovered": 1,
+     "completion": 0.8
+    }
+   }
+  },
+  {
+   "day": 84,
+   "circulating": 66127,
+   "minted": 1831691,
+   "spent": 1759920,
+   "feesBurned": 5644,
+   "collectibles": 27048,
+   "sales": 622,
+   "byType": {
+    "new": {
+     "players": 39,
+     "avgBalance": 220,
+     "avgOwned": 20.6,
+     "avgDiscovered": 14.9,
+     "completion": 14.7
+    },
+    "casual": {
+     "players": 85,
+     "avgBalance": 237,
+     "avgOwned": 72.6,
+     "avgDiscovered": 52.5,
+     "completion": 44.8
+    },
+    "active": {
+     "players": 68,
+     "avgBalance": 228,
+     "avgOwned": 191.8,
+     "avgDiscovered": 109.3,
+     "completion": 82.5
+    },
+    "subscriber": {
+     "players": 37,
+     "avgBalance": 206,
+     "avgOwned": 189.9,
+     "avgDiscovered": 108.5,
+     "completion": 81.9
+    },
+    "farmer": {
+     "players": 11,
+     "avgBalance": 1297,
+     "avgOwned": 1,
+     "avgDiscovered": 1,
+     "completion": 0.8
+    }
+   }
+  },
+  {
+   "day": 90,
+   "circulating": 66660,
+   "minted": 1892288,
+   "spent": 1819920,
+   "feesBurned": 5708,
+   "collectibles": 28067,
+   "sales": 626,
+   "byType": {
+    "new": {
+     "players": 39,
+     "avgBalance": 225,
+     "avgOwned": 20.9,
+     "avgDiscovered": 15.2,
+     "completion": 14.9
+    },
+    "casual": {
+     "players": 85,
+     "avgBalance": 227,
+     "avgOwned": 75.8,
+     "avgDiscovered": 55,
+     "completion": 46.6
+    },
+    "active": {
+     "players": 68,
+     "avgBalance": 221,
+     "avgOwned": 198.7,
+     "avgDiscovered": 110.6,
+     "completion": 83.3
+    },
+    "subscriber": {
+     "players": 37,
+     "avgBalance": 236,
+     "avgOwned": 196.8,
+     "avgDiscovered": 109.6,
+     "completion": 82.6
+    },
+    "farmer": {
+     "players": 11,
+     "avgBalance": 1345,
+     "avgOwned": 1,
+     "avgDiscovered": 1,
+     "completion": 0.8
+    }
+   }
+  }
+ ],
+ "final": {
+  "day": 90,
+  "circulating": 66660,
+  "minted": 1892288,
+  "spent": 1819920,
+  "feesBurned": 5708,
+  "collectibles": 28067,
+  "sales": 626,
+  "byType": {
+   "new": {
+    "players": 39,
+    "avgBalance": 225,
+    "avgOwned": 20.9,
+    "avgDiscovered": 15.2,
+    "completion": 14.9
+   },
+   "casual": {
+    "players": 85,
+    "avgBalance": 227,
+    "avgOwned": 75.8,
+    "avgDiscovered": 55,
+    "completion": 46.6
+   },
+   "active": {
+    "players": 68,
+    "avgBalance": 221,
+    "avgOwned": 198.7,
+    "avgDiscovered": 110.6,
+    "completion": 83.3
+   },
+   "subscriber": {
+    "players": 37,
+    "avgBalance": 236,
+    "avgOwned": 196.8,
+    "avgDiscovered": 109.6,
+    "completion": 82.6
+   },
+   "farmer": {
+    "players": 11,
+    "avgBalance": 1345,
+    "avgOwned": 1,
+    "avgDiscovered": 1,
+    "completion": 0.8
+   }
+  }
+ },
+ "marketSalesByRarity": [
+  {
+   "rarity": "common",
+   "sales": 326,
+   "avgPrice": 78
+  },
+  {
+   "rarity": "exotic",
+   "sales": 8,
+   "avgPrice": 1048
+  },
+  {
+   "rarity": "rare",
+   "sales": 146,
+   "avgPrice": 356
+  },
+  {
+   "rarity": "uncommon",
+   "sales": 146,
+   "avgPrice": 155
+  }
+ ],
+ "circulatingByRarity": {
+  "common": 12253,
+  "exotic": 2420,
+  "rare": 6464,
+  "uncommon": 6548,
+  "legendary": 382
+ },
+ "crateValue": [
+  {
+   "crate": "street",
+   "price": 240,
+   "showroomValueEv": 261,
+   "ratio": 1.09
+  },
+  {
+   "crate": "performance",
+   "price": 820,
+   "showroomValueEv": 905,
+   "ratio": 1.1
+  },
+  {
+   "crate": "jdm",
+   "price": 940,
+   "showroomValueEv": 1032,
+   "ratio": 1.1
+  },
+  {
+   "crate": "autobahn",
+   "price": 940,
+   "showroomValueEv": 1032,
+   "ratio": 1.1
+  },
+  {
+   "crate": "muscle",
+   "price": 880,
+   "showroomValueEv": 971,
+   "ratio": 1.1
+  },
+  {
+   "crate": "heritage",
+   "price": 1050,
+   "showroomValueEv": 1156,
+   "ratio": 1.1
+  },
+  {
+   "crate": "exotic",
+   "price": 3000,
+   "showroomValueEv": 3335,
+   "ratio": 1.11
+  },
+  {
+   "crate": "unicorn",
+   "price": 7000,
+   "showroomValueEv": 7500,
+   "ratio": 1.07
+  }
+ ],
+ "farmer": {
+  "avgVcPerDay": 8,
+  "maxVcPerDay": 33
+ },
+ "invariants": []
+}

@@ -1,5 +1,17 @@
 # Tasks
 
+## Prompt 3
+
+- [x] Integrate PR #1 and PR #2 on `integration/prompt3`; quarantine unverified specs
+- [x] Live scanning without a shutter (policy, loop, shared gates, screen) with tests
+- [x] Server economy, marketplace, crates, seasons, cosmetics, entitlements with tests
+- [x] Economy simulation, subscription cost analysis, threat model, backend docs
+- [ ] Client economy screens (crates with odds, reveal, market, garage albums, season, paywall)
+- [ ] Account bootstrap in the app and discovery claim with `recognitionId`
+- [ ] Apple and Google verifiers with credentials (owner)
+- [ ] Device tests of live scanning; tune thresholds from measurements
+- [ ] Owner decisions: Wikipedia specs, AutoDB sample and licence, legal review
+
 ## Done (MVP)
 
 - [x] Expo SDK 58 + TypeScript strict + Expo Router app with original visual identity

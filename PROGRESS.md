@@ -1,5 +1,16 @@
 # Progress
 
+## Prompt 3 (integration branch `integration/prompt3`, draft PR #3), 25 November 2026
+
+- PR #1 and PR #2 reconciled on one branch. Wikipedia-derived specs quarantined.
+- **Automatic live scanning replaces the shutter.** On-device gates decide when a frame may be sent, and redaction still fails closed.
+- **Server-authoritative economy:** accounts, VC ledger, verified discoveries, collectibles with provenance, crates with published odds, VC-only marketplace, achievements, seasons, cosmetics, profiles with report and block, and subscription entitlements. Billing refuses every purchase until store credentials exist.
+- Verified: `npm run verify` (267 app tests, 87 server tests), native bundle export, economy simulation with all invariants holding.
+- **Not verified:** devices, live API, store sandbox. The client economy screens are not built yet.
+- Full report, blockers and next steps: `docs/PROMPT3_REPORT.md`.
+
+---
+
 Status as of 25 November 2026: **Phase 2 (immersion, accuracy, autonomous review) implemented and verified by automated tests and native bundle builds.** Still **not run on a physical device or simulator**, and the live Anthropic API and the new native redaction module have **not** been exercised: the build environment had no iOS or Android runtime and no API key.
 
 ## Verification results (phase 2)

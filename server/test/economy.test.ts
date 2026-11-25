@@ -10,6 +10,7 @@ import { EconomyError, EconomyStore } from '../src/economy/store.ts';
 import { candidatesFor, catalog, DAY, discover, key, seededRng, store, T0, trader } from './economyHelpers.ts';
 
 const COMMON = 'toyota-corolla-e210';
+const STREET = DEFAULT_ECONOMY.crates.find((c) => c.id === 'street')!.priceVc;
 
 function code(fn: () => unknown): string {
   try {
@@ -90,12 +91,20 @@ describe('verified discoveries', () => {
     const results = Array.from({ length: 6 }, (_, i) => discover(s, a, COMMON, T0 + i * 60_000));
     assert.deepEqual(
       results.map((r) => r.rewardVc),
-      [40, 6, 6, 0, 0, 0],
+      [DEFAULT_ECONOMY.discoveryVc.common, DEFAULT_ECONOMY.repeatDiscoveryVc.common, DEFAULT_ECONOMY.repeatDiscoveryVc.common, 0, 0, 0],
     );
-    assert.equal(results.filter((r) => r.collectible).length, 1, 'one collectible per vehicle per day');
+    assert.equal(results.filter((r) => r.collectible).length, 1, 'a common car mints only on its first discovery');
     const tomorrow = discover(s, a, COMMON, T0 + DAY);
-    assert.equal(tomorrow.rewardVc, 6);
-    assert.ok(tomorrow.collectible);
+    assert.equal(tomorrow.rewardVc, DEFAULT_ECONOMY.repeatDiscoveryVc.common);
+    assert.equal(tomorrow.collectible, null);
+  });
+
+  it('mints repeat sightings of rarer vehicles at most once a week', () => {
+    const s = store();
+    const a = s.createAccount(T0).accountId;
+    const rare = catalog.vehicles.find((v) => v.rarity === 'rare')!.id;
+    const minted = [0, 1, 3, 6, 8].map((d) => !!discover(s, a, rare, T0 + d * DAY).collectible);
+    assert.deepEqual(minted, [true, false, false, false, true]);
   });
 
   it('caps rewarded discoveries per day', () => {
@@ -126,7 +135,7 @@ describe('crates', () => {
     const first = s.openCrate(a, 'street', k, T0);
     const retry = s.openCrate(a, 'street', k, T0 + 5000);
     assert.deepEqual(retry, first);
-    assert.equal(s.balanceOf(a), 1000 - 150);
+    assert.equal(s.balanceOf(a), 1000 - STREET);
     assert.equal(s.inventory(a).length, 1);
     assert.equal(code(() => s.openCrate(a, 'performance', k, T0)), 'idempotency_key_reused');
   });
@@ -134,9 +143,9 @@ describe('crates', () => {
   it('refuses without enough VC and changes nothing', () => {
     const s = store();
     const a = s.createAccount(T0).accountId;
-    s.operatorGrant(a, 100, 'test', T0);
+    s.operatorGrant(a, STREET - 1, 'test', T0);
     assert.equal(code(() => s.openCrate(a, 'street', key(), T0)), 'insufficient_vc');
-    assert.equal(s.balanceOf(a), 100);
+    assert.equal(s.balanceOf(a), STREET - 1);
     assert.equal(s.inventory(a).length, 0);
   });
 
@@ -156,14 +165,14 @@ describe('crates', () => {
     assert.equal(s.inventory(a).length, 0);
     // The same key can be retried after a failure, and charges once.
     s.openCrate(a, 'street', k, T0);
-    assert.equal(s.balanceOf(a), 350);
+    assert.equal(s.balanceOf(a), 500 - STREET);
     assert.deepEqual(s.checkInvariants(), []);
   });
 
   it('keeps unseen openings so an interrupted reveal can be shown again', () => {
     const s = store();
     const a = s.createAccount(T0).accountId;
-    s.operatorGrant(a, 300, 'test', T0);
+    s.operatorGrant(a, STREET, 'test', T0);
     const o = s.openCrate(a, 'street', key(), T0);
     assert.equal(s.unseenOpenings(a).length, 1);
     s.markOpeningSeen(a, o.openingId);
@@ -173,7 +182,7 @@ describe('crates', () => {
   it('applies the published pity guarantee', () => {
     const s = store({ seed: 7 });
     const a = s.createAccount(T0).accountId;
-    s.operatorGrant(a, 150 * 200, 'test', T0);
+    s.operatorGrant(a, STREET * 200, 'test', T0);
     let since = 0;
     for (let i = 0; i < 200; i++) {
       const o = s.openCrate(a, 'street', key(), T0 + i);
@@ -187,7 +196,7 @@ describe('crates', () => {
     const s = store({ seed: 42, config: { crates: DEFAULT_ECONOMY.crates.map((c) => ({ ...c, pity: null })) } });
     const a = s.createAccount(T0).accountId;
     const n = 6000;
-    s.operatorGrant(a, 360 * n, 'test', T0);
+    s.operatorGrant(a, 1000 * n, 'test', T0);
     const counts: Record<string, number> = {};
     for (let i = 0; i < n; i++) {
       const o = s.openCrate(a, 'jdm', key(), T0 + i);
@@ -433,7 +442,7 @@ describe('accounts', () => {
     discover(s, a, COMMON, T0);
     const e = s.exportAccount(a);
     assert.equal((e.discoveries as unknown[]).length, 1);
-    assert.equal(e.balance, 40);
+    assert.equal(e.balance, DEFAULT_ECONOMY.discoveryVc.common);
   });
 });
 

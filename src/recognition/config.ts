@@ -6,7 +6,7 @@ export interface RecognitionConfig {
 }
 
 /** Maximum automatic identifications per device per day (client-side cost control). */
-export const CLIENT_DAILY_RECOGNITION_LIMIT = 40;
+export const CLIENT_DAILY_RECOGNITION_LIMIT = 20;
 
 /**
  * Resolves the recognition mode from public build-time env vars.
