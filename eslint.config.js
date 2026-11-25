@@ -5,7 +5,7 @@ const expoConfig = require('eslint-config-expo/flat');
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ['dist/*', 'server/*', '.expo/*', 'coverage/*', 'scripts/*'],
+    ignores: ['dist/*', 'server/*', '.expo/*', 'coverage/*', 'scripts/*', 'src/vendor/*'],
   },
   {
     // Screen modules are required lazily inside tests so jest.mock() calls apply first.

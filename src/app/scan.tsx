@@ -10,6 +10,7 @@ import { Icon } from '@/components/Icon';
 import { ScanOverlay } from '@/components/ScanOverlay';
 import { Button, Notice, Txt } from '@/components/ui';
 import { prepareForRecognition } from '@/services/imageService';
+import { RedactionUnavailableError } from '@/services/redaction';
 import { recognitionConfig, useHaptics } from '@/state/AppProvider';
 import { startScanSession } from '@/state/scanSession';
 import { colors, radius, space } from '@/theme/tokens';
@@ -45,6 +46,7 @@ export default function Scanner() {
         id,
         image: { base64: prepared.base64, width: prepared.width, height: prepared.height },
         previewUri: prepared.previewUri,
+        redactedRegions: prepared.redactedRegions,
         result: null,
         createdAt: Date.now(),
       });
@@ -52,7 +54,13 @@ export default function Scanner() {
     } catch (e) {
       haptics.error();
       setPhase('error');
-      setError(e instanceof Error ? e.message : 'Capture failed.');
+      setError(
+        e instanceof RedactionUnavailableError
+          ? 'Privacy protection could not run on this photo, so it was discarded and nothing was sent. Try again.'
+          : e instanceof Error
+            ? e.message
+            : 'Capture failed.',
+      );
       captureLock.current = false;
     }
   };

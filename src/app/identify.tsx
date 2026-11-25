@@ -220,6 +220,13 @@ export default function Identify() {
           </Txt>
         </View>
       )}
+      {session.previewUri && session.redactedRegions !== undefined && (
+        <View style={styles.privacyBadge} accessibilityLabel={`Privacy protection applied. ${session.redactedRegions} areas blurred on this device.`}>
+          <Txt variant="label" color={colors.text}>
+            {session.redactedRegions === 0 ? 'NO FACES OR PLATES FOUND' : `${session.redactedRegions} AREA${session.redactedRegions === 1 ? '' : 'S'} BLURRED ON DEVICE`}
+          </Txt>
+        </View>
+      )}
       {phase.kind === 'analysing' && <ScanOverlay active label="ANALYSING SILHOUETTE…" />}
     </View>
   );
@@ -431,6 +438,15 @@ export default function Identify() {
 }
 
 const styles = StyleSheet.create({
+  privacyBadge: {
+    position: 'absolute',
+    left: space.sm,
+    bottom: space.sm,
+    paddingHorizontal: space.sm,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -9,6 +9,8 @@ export interface ScanSession {
   id: string;
   image: PreparedImage | null;
   previewUri: string | null;
+  /** Faces and text regions pixelated on the device before the photo could be sent or kept. */
+  redactedRegions?: number;
   result: RecognitionResult | null;
   /** Vehicle chosen manually from the catalog picker, overriding the prediction. */
   manualVehicleId?: string | null;
