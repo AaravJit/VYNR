@@ -60,7 +60,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     upstreamTimeoutMs: int(env, 'UPSTREAM_TIMEOUT_MS', 20_000, 1000),
     trustProxy: env.TRUST_PROXY === '1' || env.TRUST_PROXY === 'true',
     quotaDbPath: env.QUOTA_DB_PATH?.trim() || './data/quota.db',
-    dailySpendLimitUsd: num(env, 'DAILY_SPEND_LIMIT_USD', 20),
+    dailySpendLimitUsd: num(env, 'DAILY_SPEND_LIMIT_USD', 2),
     // List price of the default model; set these to match RECOGNITION_MODEL if you change it.
     inputUsdPerMTok: num(env, 'PRICE_INPUT_USD_PER_MTOK', 4),
     outputUsdPerMTok: num(env, 'PRICE_OUTPUT_USD_PER_MTOK', 20),

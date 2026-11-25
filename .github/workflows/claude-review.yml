@@ -1,0 +1,87 @@
+name: Independent PR review
+
+# Runs only after CI has passed on a pull request, and reviews exactly the commit CI tested.
+# Security model:
+#  - workflow_run executes this file from the default branch, never from the PR, so a PR
+#    cannot change its own review rules.
+#  - PR code is checked out read-only and is never installed, built or executed here.
+#  - Claude can read and comment but cannot approve: approval is a separate deterministic
+#    step that re-checks the head SHA and CI, under the github-actions[bot] identity,
+#    which is never the PR author.
+#  - Nothing in this workflow merges.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: read
+  actions: read
+
+concurrency:
+  group: claude-review-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Find the pull request for the tested commit
+        id: pr
+        run: |
+          number=$(gh api "repos/$REPO/commits/$HEAD_SHA/pulls" --jq '[.[] | select(.state=="open")][0].number')
+          if [ -z "$number" ] || [ "$number" = "null" ]; then echo "No open PR for $HEAD_SHA"; exit 1; fi
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+
+      - name: Review with Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ github.token }}
+          prompt: |
+            You are the independent reviewer for pull request #${{ steps.pr.outputs.number }} in ${{ github.repository }}.
+            Review exactly commit ${{ env.HEAD_SHA }}, which is checked out in the working directory. CI has passed on it.
+            Follow the "Pull request reviews" section of CLAUDE.md.
+
+            1. Read CLAUDE.md, then the diff: `gh pr diff ${{ steps.pr.outputs.number }}`.
+            2. Look for correctness bugs, security and privacy problems, and violations of CLAUDE.md.
+               Verify each finding against the code before reporting it.
+            3. Post one review comment with your findings:
+               `gh pr review ${{ steps.pr.outputs.number }} --comment --body-file <file>`.
+               Mark each finding BLOCKING or NON-BLOCKING.
+            4. Write exactly one word to the file `review-verdict.txt`: APPROVE if there are no BLOCKING
+               findings, otherwise CHANGES. You cannot approve or merge yourself.
+          claude_args: >-
+            --allowedTools "Read,Grep,Glob,Write(review-verdict.txt),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr review:* --comment *)"
+
+      - name: Approve only a clean, unchanged, green head
+        if: hashFiles('review-verdict.txt') != ''
+        env:
+          PR: ${{ steps.pr.outputs.number }}
+        run: |
+          verdict=$(tr -d '[:space:]' < review-verdict.txt)
+          if [ "$verdict" != "APPROVE" ]; then echo "Verdict: $verdict. Not approving."; exit 0; fi
+          current=$(gh pr view "$PR" --repo "$REPO" --json headRefOid --jq .headRefOid)
+          if [ "$current" != "$HEAD_SHA" ]; then echo "Head moved to $current; not approving a stale review."; exit 0; fi
+          failing=$(gh api "repos/$REPO/commits/$HEAD_SHA/check-runs" --paginate \
+            --jq '[.check_runs[] | select(.name != "review") | select(.status != "completed" or (.conclusion != "success" and .conclusion != "skipped" and .conclusion != "neutral"))] | length')
+          if [ "$failing" != "0" ]; then echo "$failing check(s) not green on $HEAD_SHA; not approving."; exit 0; fi
+          author=$(gh pr view "$PR" --repo "$REPO" --json author --jq .author.login)
+          if [ "$author" = "github-actions[bot]" ] || [ "$author" = "github-actions" ]; then echo "Refusing to self-approve."; exit 0; fi
+          gh pr review "$PR" --repo "$REPO" --approve --body "Approved by the independent review workflow for $HEAD_SHA: CI green, no blocking findings. Merging stays with a human."
