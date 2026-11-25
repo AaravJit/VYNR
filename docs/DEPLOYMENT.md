@@ -19,7 +19,7 @@ All settings are environment variables. The full list with defaults is in `serve
 | `ANTHROPIC_API_KEY` | (required) | The server refuses to start without it |
 | `RECOGNITION_MODEL` | `claude-haiku-5-5` | Fast first pass |
 | `RECOGNITION_ESCALATION_MODEL` | `claude-sonnet-5-5` | Second opinion only when the first answer is unsure or two models are close. `off` disables it |
-| `DAILY_SPEND_LIMIT_USD` / `MONTHLY_SPEND_LIMIT_USD` | 5 / 50 | Hard ceilings. Each call reserves its worst-case cost first, then settles the real cost |
+| `DAILY_SPEND_LIMIT_USD` / `MONTHLY_SPEND_LIMIT_USD` | 2 / 50 | Hard ceilings. Each call reserves its worst-case cost first, then settles the real cost |
 | `GLOBAL_DAILY_REQUEST_BUDGET` | 2000 | Hard cap on model calls per UTC day across everyone |
 | `RATE_PER_INSTALL_PER_DAY` / `RATE_PER_IP_PER_DAY` | 50 / 300 | Per device and per IP, persisted |
 | `STATE_FILE` | `./data/vynr-state.sqlite` | Put it on the persistent volume (`/app/data` in Docker) |

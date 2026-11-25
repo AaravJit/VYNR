@@ -17,9 +17,36 @@ export function transform(source) {
   return HEADER + source.replace("from './types'", "from './types.ts'");
 }
 
+export const CATALOG_TARGET = 'server/src/shared/catalog.json';
+
+/**
+ * The server needs the curated catalog (ids, rarity, category, country) to
+ * validate discoveries, draw crate rewards and bound market prices. It is
+ * exported as JSON so the server never imports app code.
+ */
+export async function catalogJson() {
+  const { VEHICLES, CATALOG_VERSION } = await import(join(root, 'src/catalog/vehicles.ts'));
+  const { MANUFACTURERS } = await import(join(root, 'src/catalog/manufacturers.ts'));
+  const manufacturers = MANUFACTURERS.map((m) => ({ id: m.id, name: m.name, country: m.country, aliases: m.aliases ?? [] }));
+  const vehicles = VEHICLES.map((v) => ({
+    id: v.id,
+    manufacturerId: v.manufacturerId,
+    model: v.model,
+    generation: v.generation,
+    yearStart: v.yearStart,
+    yearEnd: v.yearEnd,
+    category: v.category,
+    rarity: v.rarity,
+    aliases: v.aliases,
+  }));
+  return JSON.stringify({ version: CATALOG_VERSION, manufacturers, vehicles }, null, 1) + '\n';
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   for (const [from, to] of SHARED) {
     writeFileSync(join(root, to), transform(readFileSync(join(root, from), 'utf8')));
     console.log(`synced ${from} -> ${to}`);
   }
+  writeFileSync(join(root, CATALOG_TARGET), await catalogJson());
+  console.log(`synced catalog -> ${CATALOG_TARGET}`);
 }

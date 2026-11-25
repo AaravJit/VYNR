@@ -1,3 +1,4 @@
+import { FEATURES, type Feature } from './economy/routes.ts';
 import { isPricedModel } from './pricing.ts';
 
 export interface ServerConfig {
@@ -35,6 +36,23 @@ export interface ServerConfig {
   stateFile: string;
   /** Trust the last X-Forwarded-For hop (only behind a known reverse proxy). */
   trustProxy: boolean;
+  /** Daily identifications per install for accounts with an active VYNR Black subscription. */
+  perInstallPerDayBlack: number;
+  /** SQLite file for the authoritative economy (accounts, VC ledger, collectibles, market). */
+  economyStateFile: string;
+  /** Enabled feature flags; unfinished features stay off. */
+  features: Set<Feature>;
+  accountsPerIpPerDay: number;
+  economyWritesPerMinute: number;
+}
+
+function features(raw: string | undefined): Set<Feature> {
+  const list = (raw ?? 'economy,crates,marketplace,seasons,social')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  for (const f of list) if (!(FEATURES as readonly string[]).includes(f)) throw new Error(`Unknown feature flag ${f}`);
+  return new Set(list as Feature[]);
 }
 
 function int(env: NodeJS.ProcessEnv, key: string, fallback: number, min = 0): number {
@@ -77,12 +95,17 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     perIpPerMinute: int(env, 'RATE_PER_IP_PER_MINUTE', 20, 1),
     perIpPerDay: int(env, 'RATE_PER_IP_PER_DAY', 300, 1),
     globalDailyBudget: int(env, 'GLOBAL_DAILY_REQUEST_BUDGET', 2000, 0),
-    dailySpendUsd: num(env, 'DAILY_SPEND_LIMIT_USD', 5, 0),
+    dailySpendUsd: num(env, 'DAILY_SPEND_LIMIT_USD', 2, 0),
     monthlySpendUsd: num(env, 'MONTHLY_SPEND_LIMIT_USD', 50, 0),
     maxConcurrent: int(env, 'MAX_CONCURRENT_UPSTREAM', 8, 1),
     upstreamTimeoutMs: int(env, 'UPSTREAM_TIMEOUT_MS', 20_000, 1000),
     resultCacheMs: int(env, 'RESULT_CACHE_SECONDS', 86_400, 0) * 1000,
     stateFile: env.STATE_FILE?.trim() || './data/vynr-state.sqlite',
     trustProxy: env.TRUST_PROXY === '1' || env.TRUST_PROXY === 'true',
+    perInstallPerDayBlack: int(env, 'RATE_PER_INSTALL_PER_DAY_BLACK', 100, 1),
+    economyStateFile: env.ECONOMY_STATE_FILE?.trim() || './data/vynr-economy.sqlite',
+    features: features(env.FEATURES),
+    accountsPerIpPerDay: int(env, 'ACCOUNTS_PER_IP_PER_DAY', 5, 1),
+    economyWritesPerMinute: int(env, 'ECONOMY_WRITES_PER_MINUTE', 60, 1),
   };
 }

@@ -5,6 +5,11 @@ import type { ServerConfig } from './config.ts';
 import { type Clock, Semaphore, systemClock } from './limits.ts';
 import { type Identification, UpstreamError, type VisionProvider } from './providers/types.ts';
 import type { RecognitionResponse } from './shared/types.ts';
+import { type BillingVerifier, UnconfiguredVerifier } from './economy/billing.ts';
+import { loadCatalog } from './economy/catalog.ts';
+import { createEconomyRoutes } from './economy/routes.ts';
+import type { EconomyStore } from './economy/store.ts';
+import { clientIp, readBody, send } from './http.ts';
 import { QuotaStore } from './store.ts';
 import { INSTALL_ID_PATTERN, parseRecognizeRequest, RequestError, type ValidImage } from './validation.ts';
 
@@ -17,71 +22,13 @@ export interface AppDeps {
   log?: Logger;
   /** Persistent counters. Defaults to a SQLite file at config.stateFile. */
   store?: QuotaStore;
+  /** The authoritative economy. When absent, only recognition is served. */
+  economy?: EconomyStore;
+  billing?: { apple: BillingVerifier; google: BillingVerifier };
 }
 
 const MINUTE = 60_000;
 const DAY = 86_400_000;
-
-const SECURITY_HEADERS: Record<string, string> = {
-  'Cache-Control': 'no-store',
-  'X-Content-Type-Options': 'nosniff',
-  'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'",
-  'Referrer-Policy': 'no-referrer',
-  'Strict-Transport-Security': 'max-age=31536000',
-};
-
-function send(res: ServerResponse, status: number, body: unknown, extra: Record<string, string> = {}): void {
-  const payload = JSON.stringify(body);
-  res.writeHead(status, {
-    ...SECURITY_HEADERS,
-    'Content-Type': 'application/json; charset=utf-8',
-    'Content-Length': Buffer.byteLength(payload).toString(),
-    ...extra,
-  });
-  res.end(payload);
-}
-
-function readBody(req: IncomingMessage, maxBytes: number): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const declared = Number(req.headers['content-length']);
-    if (Number.isFinite(declared) && declared > maxBytes) {
-      reject(new RequestError(413, 'image_too_large', 'Request body too large'));
-      req.resume();
-      return;
-    }
-    const chunks: Buffer[] = [];
-    let size = 0;
-    let failed = false;
-    req.on('data', (chunk: Buffer) => {
-      if (failed) return;
-      size += chunk.length;
-      if (size > maxBytes) {
-        failed = true;
-        reject(new RequestError(413, 'image_too_large', 'Request body too large'));
-        req.resume();
-        return;
-      }
-      chunks.push(chunk);
-    });
-    req.on('end', () => {
-      if (!failed) resolve(Buffer.concat(chunks).toString('utf8'));
-    });
-    req.on('error', (e) => {
-      if (!failed) reject(e);
-    });
-  });
-}
-
-function clientIp(req: IncomingMessage, trustProxy: boolean): string {
-  if (trustProxy) {
-    const xff = req.headers['x-forwarded-for'];
-    const raw = Array.isArray(xff) ? xff.join(',') : xff;
-    // The last hop is the one appended by our own (trusted) proxy; earlier hops are client-controlled.
-    const last = raw?.split(',').map((s) => s.trim()).filter(Boolean).pop();
-    if (last) return last;
-  }
-  return req.socket.remoteAddress ?? 'unknown';
-}
 
 /**
  * Creates the request handler. Rate limits, request and spend ceilings, and the
@@ -94,6 +41,20 @@ export function createApp(deps: AppDeps) {
   const clock = deps.clock ?? systemClock;
   const log = deps.log ?? ((line: string) => console.log(line));
   const store = deps.store ?? new QuotaStore(config.stateFile);
+
+  const economy = deps.economy
+    ? createEconomyRoutes({
+        store: deps.economy,
+        catalog: loadCatalog(),
+        limits: store,
+        clock,
+        features: config.features,
+        billing: deps.billing ?? { apple: new UnconfiguredVerifier('apple'), google: new UnconfiguredVerifier('google') },
+        trustProxy: config.trustProxy,
+        accountsPerIpPerDay: config.accountsPerIpPerDay,
+        writesPerMinute: config.economyWritesPerMinute,
+      })
+    : null;
 
   const concurrency = new Semaphore(config.maxConcurrent);
   // Identical photos in flight share one model call instead of paying twice.
@@ -156,11 +117,14 @@ export function createApp(deps: AppDeps) {
     const ip = clientIp(req, config.trustProxy);
     // Order matters: minute windows first so bursts don't burn the daily allowance.
     const now = clock.now();
+    // Identification never needs an account. With one, the answer can later back a verified discovery.
+    const account = economy?.accountFor(req, now) ?? null;
+    const installDaily = account && deps.economy!.hasBlack(account, now) ? config.perInstallPerDayBlack : config.perInstallPerDay;
     for (const [key, limit, windowMs] of [
       [`ip:m:${ip}`, config.perIpPerMinute, MINUTE],
       [`install:m:${installId}`, config.perInstallPerMinute, MINUTE],
       [`ip:d:${ip}`, config.perIpPerDay, DAY],
-      [`install:d:${installId}`, config.perInstallPerDay, DAY],
+      [`install:d:${installId}`, installDaily, DAY],
     ] as const) {
       const retryAfter = store.hit(key, limit, windowMs, now);
       if (retryAfter > 0) {
@@ -190,8 +154,10 @@ export function createApp(deps: AppDeps) {
     // Deduplication: the same photo (byte-identical after redaction and metadata stripping) is answered from cache.
     const hash = createHash('sha256').update(image.jpeg).digest('hex');
     const cached = config.resultCacheMs > 0 ? store.getCached(hash, clock.now()) : null;
+    const withRecord = (r: RecognitionResponse) =>
+      account && r.vehicleDetected && r.candidates.length > 0 ? { ...r, recognitionId: deps.economy!.recordRecognition(account, r.candidates, clock.now()) } : r;
     if (cached) {
-      send(res, 200, JSON.parse(cached) as RecognitionResponse, { 'X-Recognition-Cache': 'hit' });
+      send(res, 200, withRecord(JSON.parse(cached) as RecognitionResponse), { 'X-Recognition-Cache': 'hit' });
       return 200;
     }
 
@@ -211,7 +177,7 @@ export function createApp(deps: AppDeps) {
     try {
       const { response } = await pending;
       if (owner && config.resultCacheMs > 0) store.putCached(hash, JSON.stringify(response), clock.now() + config.resultCacheMs);
-      send(res, 200, response);
+      send(res, 200, withRecord(response));
       return 200;
     } catch (err) {
       if (err instanceof RequestError) {
@@ -244,8 +210,13 @@ export function createApp(deps: AppDeps) {
           status = await recognize(req, res);
         }
       } else {
-        send(res, 404, { error: 'not_found' });
-        status = 404;
+        const handled = economy ? await economy.handle(req, res, path ?? '/') : null;
+        if (handled === null) {
+          send(res, 404, { error: 'not_found' });
+          status = 404;
+        } else {
+          status = handled;
+        }
       }
     } catch (err) {
       log(`ERROR unhandled ${err instanceof Error ? err.name : 'error'}`);
