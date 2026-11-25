@@ -1,6 +1,7 @@
 /**
- * The scanner is the first screen after onboarding. Without camera permission
- * it explains why the camera is needed and never starts capture.
+ * The scanner is the first screen after onboarding and scans automatically.
+ * Without camera permission it explains why the camera is needed and never
+ * starts sampling; with permission it waits for the camera before scanning.
  */
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
@@ -23,7 +24,12 @@ jest.mock('expo-camera', () => ({
 const mockRouter = { push: jest.fn() };
 jest.mock('expo-router', () => ({ router: mockRouter, useIsFocused: () => true }));
 jest.mock('@/db/expoDriver', () => ({ ExpoSqlDriver: { open: jest.fn() } }));
-jest.mock('@/services/imageService', () => ({ prepareForRecognition: jest.fn(), deleteAllPhotos: jest.fn() }));
+jest.mock('@/services/imageService', () => ({
+  prepareForRecognition: jest.fn(),
+  measureFrame: jest.fn(),
+  deleteAllPhotos: jest.fn(),
+  deleteFileQuietly: jest.fn(),
+}));
 jest.mock('@/services/sound', () => ({ playSound: jest.fn() }));
 
 async function readyStore() {
@@ -45,14 +51,16 @@ it('asks for camera access with a clear reason and never captures without it', a
       </AppProvider>
     </SafeAreaProvider>,
   );
-  expect(await screen.findByText('Point. Shoot. Collect.')).toBeTruthy();
-  expect(screen.getByText(/nothing is\s+sent until you press the shutter/)).toBeTruthy();
+  expect(await screen.findByText('Point at a car. VYNR does the rest.')).toBeTruthy();
+  expect(screen.getByText(/blurs faces and\s+plates, and sends a photo only when a car is in clear view/)).toBeTruthy();
   await fireEvent.press(screen.getByLabelText('Allow camera'));
   expect(mockRequest).toHaveBeenCalledTimes(1);
-  expect(screen.queryByLabelText('Capture photo')).toBeNull();
+  const { measureFrame, prepareForRecognition } = jest.requireMock('@/services/imageService');
+  expect(measureFrame).not.toHaveBeenCalled();
+  expect(prepareForRecognition).not.toHaveBeenCalled();
 });
 
-it('shows the shutter, disabled until the camera is ready', async () => {
+it('has no shutter and does not sample until the camera is ready', async () => {
   mockPermission = { granted: true, canAskAgain: true };
   const Scanner = require('@/app/(tabs)/index').default;
   await render(
@@ -62,7 +70,9 @@ it('shows the shutter, disabled until the camera is ready', async () => {
       </AppProvider>
     </SafeAreaProvider>,
   );
-  const shutter = await screen.findByLabelText('Capture photo');
-  expect(shutter.props.accessibilityState).toMatchObject({ disabled: true });
-  expect(screen.getByText(`0/${catalog.vehicles.length}`)).toBeTruthy();
+  expect(await screen.findByLabelText('Starting camera…')).toBeTruthy();
+  expect(screen.queryByLabelText('Capture photo')).toBeNull();
+  expect(screen.getByText('Never scan while driving, and stay out of the road.')).toBeTruthy();
+  const { measureFrame } = jest.requireMock('@/services/imageService');
+  expect(measureFrame).not.toHaveBeenCalled();
 });

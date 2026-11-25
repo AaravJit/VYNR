@@ -12,16 +12,32 @@ conventions and commands. Changes to this file need the owner's review
   never talks to vehicle electronics. Street intel (`src/domain/intel.ts`) is
   seeded game flavour: its tracker and alarm grades depend only on the seed,
   and it is always labelled simulated.
-- **Never fabricate.** Specs come only from `data/specs.json`, with a source per
-  record. When a generation had several engines or gearboxes, show them all; do
-  not guess which one the photographed car has. Do not show model confidence
-  as a percentage or call it calibrated.
+- **Never fabricate.** Specs are shown only from a source marked approved in
+  `src/catalog/dataSources.ts` and recorded in `docs/DATA_SOURCES.md`; the
+  current Wikipedia-derived `data/specs.json` is quarantined until the owner
+  approves it. When a generation had several engines or gearboxes, show them
+  all; do not guess which one the photographed car has. Do not show model
+  confidence as a percentage or call it calibrated.
 - **Privacy.** Faces and plates are pixelated on the phone before any upload or
   saved thumbnail. If redaction is unavailable or fails, nothing is uploaded
-  or kept. Recognition runs only when the player presses the shutter; never
-  add continuous cloud recognition.
+  or kept. Live scanning measures frames on the phone; a frame goes to the
+  cloud only after the gates in `src/scanner/livePolicy.ts` (target size,
+  steadiness, sharpness, exposure, duplicate suppression, cooldown, session
+  cap) and the shared checks in `src/recognition/gated.ts` (consent, daily
+  allowance, redaction). Never stream frames to a paid service or loosen those
+  gates without the owner's approval.
 - **Secrets stay on the server.** API keys never go in `EXPO_PUBLIC_*`, the app
   bundle, logs or test fixtures.
+
+## Authority
+
+- Make routine engineering and design decisions independently.
+- Ask the owner before anything that costs money, needs new credentials,
+  accounts or permissions, or is irreversible (store publication, production
+  data). Never purchase anything without explicit approval.
+- Never merge to `main` and never enable auto-merge; merging is the owner's action.
+- The in-game economy is closed-loop: VYNR Credits are earned only, never sold,
+  withdrawn or converted, and subscribers get no odds, currency or market advantage.
 
 ## Working rules
 

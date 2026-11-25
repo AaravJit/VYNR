@@ -22,6 +22,8 @@ export interface LiveScanConfig {
   /** Consecutive frames the target must hold still (IoU ≥ minStableIou) before sending. */
   stableFrames: number;
   minStableIou: number;
+  /** Two consecutive frames whose perceptual hashes differ by more than this are treated as camera movement. */
+  maxMotionHamming: number;
   /** Laplacian variance below this is treated as blurred. */
   minSharpness: number;
   minLuma: number;
@@ -45,6 +47,7 @@ export const DEFAULT_LIVE_SCAN_CONFIG: LiveScanConfig = {
   minTargetArea: 0.08,
   stableFrames: 2,
   minStableIou: 0.55,
+  maxMotionHamming: 14,
   minSharpness: 40,
   minLuma: 35,
   maxLuma: 225,
@@ -77,6 +80,8 @@ export type Hint =
 export interface LiveScanState {
   target: Box | null;
   stableCount: number;
+  /** Hash of the previous sharp, well-exposed frame, used to detect camera movement. */
+  lastHash: string | null;
   lastUsefulAt: number;
   lastCloudAt: number | null;
   cloudCalls: number;
@@ -95,6 +100,7 @@ export function initialLiveScanState(now: number): LiveScanState {
   return {
     target: null,
     stableCount: 0,
+    lastHash: null,
     lastUsefulAt: now,
     lastCloudAt: null,
     cloudCalls: 0,
@@ -141,9 +147,10 @@ export function decide(
   if (m.luma > cfg.maxLuma) return wait({ ...state, target, stableCount: 0 }, 'too_bright', cfg.activeIntervalMs);
   if (m.sharpness < cfg.minSharpness) return wait({ ...state, target, stableCount: 0 }, 'blurred', cfg.activeIntervalMs);
 
-  const steady = state.target != null && iou(target, state.target) >= cfg.minStableIou;
-  const stableCount = steady ? state.stableCount + 1 : 1;
-  state = { ...state, target, stableCount };
+  const boxSteady = state.target != null && iou(target, state.target) >= cfg.minStableIou;
+  const viewSteady = state.lastHash == null || hammingDistance(state.lastHash, m.hash) <= cfg.maxMotionHamming;
+  const stableCount = boxSteady && viewSteady ? state.stableCount + 1 : 1;
+  state = { ...state, target, stableCount, lastHash: m.hash };
   if (stableCount < cfg.stableFrames) return wait(state, 'hold_steady', cfg.activeIntervalMs);
 
   if (recentHashes.some((h) => hammingDistance(h.hash, m.hash) <= cfg.duplicateHamming)) {
@@ -175,7 +182,7 @@ export function afterIdentify(
   cfg: LiveScanConfig = DEFAULT_LIVE_SCAN_CONFIG,
 ): LiveScanState {
   if (outcome === 'identified') return { ...state, paused: true };
-  return { ...state, backoffUntil: now + cfg.retryBackoffMs, target: null, stableCount: 0 };
+  return { ...state, backoffUntil: now + cfg.retryBackoffMs, target: null, stableCount: 0, lastHash: null };
 }
 
 export function resume(state: LiveScanState, now: number, resetSession = false): LiveScanState {
@@ -185,6 +192,7 @@ export function resume(state: LiveScanState, now: number, resetSession = false):
     lastUsefulAt: now,
     target: null,
     stableCount: 0,
+    lastHash: null,
     hint: 'searching',
     ...(resetSession ? { cloudCalls: 0 } : {}),
   };

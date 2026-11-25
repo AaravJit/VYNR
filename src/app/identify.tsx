@@ -16,10 +16,11 @@ import { generateIntel } from '@/domain/intel';
 import { encounterXp } from '@/domain/progression';
 import type { EncounterSource } from '@/domain/types';
 import { type CatalogMatch, confidenceBand, matchCandidates } from '@/recognition/matcher';
-import { RecognitionError, userMessageFor } from '@/recognition/types';
+import { recognizeWithGates } from '@/recognition/gated';
+import { userMessageFor } from '@/recognition/types';
 import { type RedactionSummary, saveThumbnail } from '@/services/imageService';
 import { playSound } from '@/services/sound';
-import { getRecognitionProvider, recognitionConfig, useAppState, useAppStore, useHaptics } from '@/state/AppProvider';
+import { appRecognitionGates, useAppState, useAppStore, useHaptics } from '@/state/AppProvider';
 import {
   clearScanSession,
   currentScanSession,
@@ -68,45 +69,21 @@ export default function Identify() {
     // Created before any await so leaving the screen cancels every step, including the upload.
     const controller = new AbortController();
     abortRef.current = controller;
-    const stopped = () => controller.signal.aborted;
     // Consent is read from the store at each step, not from this render, so revoking it always wins.
-    const consented = () => store.getState().settings.cloudRecognitionConsent;
     const run = async () => {
-      if (recognitionConfig.mode === 'unconfigured') return setPhase({ kind: 'manual', reason: 'unconfigured' });
-      if (recognitionConfig.mode === 'remote' && !consented()) return setPhase({ kind: 'manual', reason: 'no_consent' });
-      if (recognitionConfig.mode === 'remote' && (await store.recognitionAllowance()) <= 0) {
-        if (!stopped()) setPhase({ kind: 'manual', reason: 'quota' });
-        return;
-      }
-      if (stopped()) return;
-      const provider = await getRecognitionProvider(state.player!.id);
-      if (stopped()) return;
-      if (!provider) return setPhase({ kind: 'manual', reason: 'unconfigured' });
       setPhase({ kind: 'analysing' });
       try {
-        if (!provider.simulated) {
-          // Faces and plates must be pixelated on the phone before anything is uploaded. If the
-          // redaction step did not run (or failed), the photo never leaves the device.
-          if (s.redaction?.status !== 'redacted') return setPhase({ kind: 'manual', reason: 'no_redaction' });
-          await store.noteRecognitionUsed();
-          // Last check immediately before the photo leaves the device.
-          if (stopped()) return;
-          if (!consented()) return setPhase({ kind: 'manual', reason: 'no_consent' });
-        }
-        const result = await provider.recognize(s.image, controller.signal);
-        if (stopped()) return;
-        updateScanSession(s.id, { result });
+        const outcome = await recognizeWithGates(appRecognitionGates(store, state.player!.id), s.image, s.redaction, controller.signal);
+        if (outcome.kind === 'aborted') return;
+        if (outcome.kind === 'manual') return setPhase({ kind: 'manual', reason: outcome.reason });
+        updateScanSession(s.id, { result: outcome.result });
         setPhase({ kind: 'done' });
         haptics.success();
-        if (result.vehicleDetected) playSound('identified', store.getState().settings.soundEnabled);
+        if (outcome.result.vehicleDetected) playSound('identified', store.getState().settings.soundEnabled);
       } catch (e) {
-        if (stopped()) return;
+        if (controller.signal.aborted) return;
         haptics.error();
-        if (e instanceof RecognitionError && e.code === 'quota_exceeded') {
-          setPhase({ kind: 'manual', reason: 'quota' });
-        } else {
-          setPhase({ kind: 'error', message: userMessageFor(e) });
-        }
+        setPhase({ kind: 'error', message: userMessageFor(e) });
       }
     };
     void run();
@@ -212,7 +189,7 @@ export default function Identify() {
         <EmptyState
           icon="alert"
           title="This scan has expired"
-          body="Scans are kept in memory only. Take a new photo to continue."
+          body="Scans are kept in memory only. Scan the car again to continue."
           action={<Button label="Open scanner" icon="scan" onPress={() => router.dismissTo('/')} />}
         />
       </Screen>
@@ -320,7 +297,7 @@ export default function Identify() {
             title="No vehicle detected"
             body={session.result.notes ?? 'Try again with the whole vehicle in frame and good lighting.'}
           />
-          <Button label="Retake photo" icon="scan" onPress={() => router.dismissTo('/')} />
+          <Button label="Scan again" icon="scan" onPress={() => router.dismissTo('/')} />
           <Button label="Identify manually" variant="secondary" onPress={openPicker} />
         </>
       )}

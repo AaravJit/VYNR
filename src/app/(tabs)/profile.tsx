@@ -201,7 +201,7 @@ export default function Profile() {
         <Divider />
         <SettingRow
           label="Sounds"
-          description="Shutter and discovery sounds. They follow your phone’s silent switch."
+          description="Discovery sounds. They follow your phone’s silent switch."
           value={state.settings.soundEnabled}
           onChange={set('soundEnabled')}
         />

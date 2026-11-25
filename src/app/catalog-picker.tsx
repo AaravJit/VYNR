@@ -36,7 +36,7 @@ export default function CatalogPicker() {
       {!session ? (
         <View style={{ padding: space.lg, gap: space.md }}>
           <Txt variant="body" color={colors.textMuted}>
-            This scan has expired. Take a new photo to log an encounter.
+            This scan has expired. Scan the car again to log an encounter.
           </Txt>
           <Button label="Close" onPress={() => router.back()} />
         </View>

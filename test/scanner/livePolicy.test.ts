@@ -35,7 +35,10 @@ describe('frame analysis', () => {
   const H = 24;
   const flat = new Uint8Array(W * H * 4).fill(128);
   const stripes = new Uint8Array(W * H * 4);
-  for (let i = 0; i < W * H; i++) stripes.fill((i % 2) * 255, i * 4, i * 4 + 3), (stripes[i * 4 + 3] = 255);
+  for (let i = 0; i < W * H; i++) {
+    stripes.fill((i % 2) * 255, i * 4, i * 4 + 3);
+    stripes[i * 4 + 3] = 255;
+  }
 
   it('scores a flat frame as blurred and a detailed one as sharp', () => {
     expect(laplacianVariance(toGray(flat, W, H), W, H)).toBe(0);
@@ -100,13 +103,26 @@ describe('live scan policy', () => {
     // Same view again after the backoff: suppressed as already checked.
     for (const t of [8000, 8700, 9400]) [s, d] = decide(s, good('0f0f0f0f0f0f0f0e'), t);
     expect(d).toMatchObject({ kind: 'wait', hint: 'already_checked' });
-    // A genuinely different view is allowed once the cooldown has passed.
+    // A genuinely different view is allowed once it has held still for a frame
+    // (a large hash jump counts as camera movement) and the cooldown has passed.
     [s, d] = decide(s, good('f0f0f0f0f0f0f0f0'), 10_100);
+    expect(d).toMatchObject({ kind: 'wait', hint: 'hold_steady' });
+    [s, d] = decide(s, good('f0f0f0f0f0f0f0f0'), 10_800);
     expect(d.kind).toBe('identify');
     // And the cooldown blocks an immediate second call even for another new view.
-    [s, d] = decide(s, good('00ff00ff00ff00ff'), 10_800);
     [s, d] = decide(s, good('00ff00ff00ff00ff'), 11_500);
+    [s, d] = decide(s, good('00ff00ff00ff00ff'), 12_200);
     expect(d).toMatchObject({ kind: 'wait', hint: 'cooldown' });
+  });
+
+  it('treats a large change between consecutive frames as camera movement', () => {
+    let s = initialLiveScanState(0);
+    let d;
+    [s, d] = decide(s, good('0000000000000000'), 0);
+    [s, d] = decide(s, good('ffffffffffffffff'), 700);
+    expect(d).toMatchObject({ kind: 'wait', hint: 'hold_steady' });
+    [s, d] = decide(s, good('ffffffffffffffff'), 1400);
+    expect(d.kind).toBe('identify');
   });
 
   it('caps cloud calls per session and pauses', () => {
@@ -148,5 +164,26 @@ describe('result classification', () => {
     expect(classifyRecognition({ vehicleDetected: true, candidates: [{ confidence: 0.9 }] }, 0)).toBe('uncertain');
     expect(classifyRecognition({ vehicleDetected: true, candidates: [{ confidence: 0.5 }] }, 2)).toBe('uncertain');
     expect(classifyRecognition({ vehicleDetected: false, candidates: [] }, 0)).toBe('no_vehicle');
+  });
+});
+
+describe('cropAround', () => {
+  it('adds a margin and skips crops of near-full targets', () => {
+    const { cropAround } = jest.requireActual('@/scanner/tracking') as typeof import('@/scanner/tracking');
+    const c = cropAround({ x: 0.05, y: 0.4, width: 0.3, height: 0.2 })!;
+    expect(c.x).toBeCloseTo(0.005);
+    expect(c.y).toBeCloseTo(0.37);
+    expect(c.width).toBeCloseTo(0.39);
+    expect(c.height).toBeCloseTo(0.26);
+    expect(cropAround({ x: 0, y: 0, width: 0.9, height: 0.9 })).toBeNull();
+  });
+});
+
+describe('cropAround at the frame edge', () => {
+  it('never extends past the frame', () => {
+    const { cropAround } = jest.requireActual('@/scanner/tracking') as typeof import('@/scanner/tracking');
+    const c = cropAround({ x: 0.7, y: 0, width: 0.3, height: 0.3 })!;
+    expect(c.x + c.width).toBeLessThanOrEqual(1);
+    expect(c.y).toBe(0);
   });
 });

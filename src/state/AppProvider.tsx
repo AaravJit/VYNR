@@ -9,6 +9,7 @@ import { GAME_CONFIG } from '@/domain/config';
 import { appRecognitionConfig, type RecognitionConfig } from '@/recognition/config';
 import { MockRecognitionProvider } from '@/recognition/mockProvider';
 import { RemoteRecognitionProvider } from '@/recognition/remoteProvider';
+import type { RecognitionGates } from '@/recognition/gated';
 import type { RecognitionProvider } from '@/recognition/types';
 import { deleteAllPhotos, deleteFileQuietly } from '@/services/imageService';
 
@@ -98,4 +99,15 @@ export async function getRecognitionProvider(playerId: string): Promise<Recognit
       : new RemoteRecognitionProvider({ endpoint: cfg.endpoint!, installId: await rateLimitId(playerId) });
   cachedFor = key;
   return cachedProvider;
+}
+
+/** The app's consent, allowance and provider checks, in the shape `recognizeWithGates` expects. */
+export function appRecognitionGates(store: AppStore, playerId: string): RecognitionGates {
+  return {
+    mode: recognitionConfig.mode,
+    consented: () => store.getState().settings.cloudRecognitionConsent,
+    allowance: () => store.recognitionAllowance(),
+    noteUsed: () => store.noteRecognitionUsed(),
+    provider: () => getRecognitionProvider(playerId),
+  };
 }

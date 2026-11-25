@@ -2,6 +2,7 @@ import { Directory, File, Paths } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 
 import type { PreparedImage } from '@/recognition/types';
+import { type FrameMetrics, metricsFromJpeg } from '@/scanner/frameAnalysis';
 
 import { base64ToBytes, bytesToBase64, stripJpegMetadata } from './jpeg';
 import { pixelateJpeg } from './pixelate';
@@ -11,8 +12,27 @@ import { mlKitDetector, type RegionDetector, RedactionUnavailableError } from '.
 export const RECOGNITION_MAX_EDGE = 1024;
 const THUMBNAIL_MAX_EDGE = 640;
 
-async function render(uri: string, width: number, height: number, maxEdge: number, compress: number) {
+/** A crop in normalised coordinates (0..1). */
+export interface NormalisedCrop {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+async function render(uri: string, width: number, height: number, maxEdge: number, compress: number, crop?: NormalisedCrop) {
   const ctx = ImageManipulator.manipulate(uri);
+  if (crop) {
+    const originX = Math.max(0, Math.round(crop.x * width));
+    const originY = Math.max(0, Math.round(crop.y * height));
+    const w = Math.min(width - originX, Math.round(crop.width * width));
+    const h = Math.min(height - originY, Math.round(crop.height * height));
+    if (w > 32 && h > 32) {
+      ctx.crop({ originX, originY, width: w, height: h });
+      width = w;
+      height = h;
+    }
+  }
   if (Math.max(width, height) > maxEdge) {
     ctx.resize(width >= height ? { width: maxEdge } : { height: maxEdge });
   }
@@ -66,10 +86,11 @@ export async function prepareForRecognition(
   width: number,
   height: number,
   detector: RegionDetector = mlKitDetector(),
+  crop?: NormalisedCrop,
 ): Promise<CapturedPhoto> {
   let encodedUri: string | null = null;
   try {
-    const encoded = await render(captureUri, width, height, RECOGNITION_MAX_EDGE, 0.85);
+    const encoded = await render(captureUri, width, height, RECOGNITION_MAX_EDGE, 0.85, crop);
     encodedUri = encoded.uri;
     let redaction: RedactionSummary;
     let bytes = base64ToBytes(encoded.base64);
@@ -96,6 +117,19 @@ export async function prepareForRecognition(
     deleteFileQuietly(captureUri);
     deleteFileQuietly(encodedUri);
   }
+}
+
+/** Longest edge used for on-device frame measurements (sharpness, exposure, perceptual hash). */
+export const FRAME_METRICS_EDGE = 160;
+
+/**
+ * Measures a live-scan frame on the device. The frame is shrunk to 160 px and
+ * decoded in memory; the small copy is deleted immediately. Nothing leaves the phone.
+ */
+export async function measureFrame(uri: string, width: number, height: number): Promise<FrameMetrics> {
+  const small = await render(uri, width, height, FRAME_METRICS_EDGE, 0.8);
+  deleteFileQuietly(small.uri);
+  return metricsFromJpeg(base64ToBytes(small.base64));
 }
 
 function photosDir(): Directory {

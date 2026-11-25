@@ -63,3 +63,15 @@ export function clampBox(b: Box): Box {
   const y = Math.min(1, Math.max(0, b.y));
   return { x, y, width: Math.min(1 - x, Math.max(0, b.width)), height: Math.min(1 - y, Math.max(0, b.height)) };
 }
+
+/**
+ * The region sent for identification when several objects are in view: the
+ * chosen target plus a margin, so the cloud sees one car rather than the scene.
+ * Returns null when the target already fills most of the frame (send it whole).
+ */
+export function cropAround(target: Box, margin = 0.15, maxShare = 0.6): Box | null {
+  if (area(target) >= maxShare) return null;
+  const mx = target.width * margin;
+  const my = target.height * margin;
+  return clampBox({ x: target.x - mx, y: target.y - my, width: target.width + 2 * mx, height: target.height + 2 * my });
+}

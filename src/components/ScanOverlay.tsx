@@ -141,3 +141,60 @@ const styles = StyleSheet.create({
     backgroundColor: colors.glassStrong,
   },
 });
+
+/**
+ * Where a normalised frame box appears on a preview that fills `width × height`
+ * with "cover" scaling (the camera preview crops the frame to fill the screen).
+ */
+export function coverRect(
+  box: { x: number; y: number; width: number; height: number },
+  aspect: number,
+  width: number,
+  height: number,
+): { left: number; top: number; width: number; height: number } {
+  const scale = Math.max(width / aspect, height);
+  const cw = aspect * scale;
+  const ch = scale;
+  const ox = (width - cw) / 2;
+  const oy = (height - ch) / 2;
+  return { left: ox + box.x * cw, top: oy + box.y * ch, width: box.width * cw, height: box.height * ch };
+}
+
+/**
+ * Brackets around the object the scanner is tracking. Decorative: the hint pill
+ * carries the same information for screen readers.
+ */
+export function TargetBrackets({
+  box,
+  aspect,
+  size,
+  tone,
+}: {
+  box: { x: number; y: number; width: number; height: number } | null;
+  aspect: number | null;
+  size: { width: number; height: number } | null;
+  tone: 'tracking' | 'locked' | 'identifying';
+}) {
+  const busy = tone === 'identifying';
+  const pulse = useLoop(busy, 1200);
+  if (!box || !aspect || !size) return null;
+  const r = coverRect(box, aspect, size.width, size.height);
+  const color = tone === 'tracking' ? 'rgba(255,255,255,0.75)' : tone === 'locked' ? colors.accent : colors.violet;
+  return (
+    <Animated.View
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={{
+        position: 'absolute',
+        left: r.left,
+        top: r.top,
+        width: r.width,
+        height: r.height,
+        opacity: busy ? pulse.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0.55, 1] }) : 1,
+      }}
+    >
+      <Corners color={color} />
+    </Animated.View>
+  );
+}
