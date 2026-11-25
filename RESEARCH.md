@@ -1,6 +1,6 @@
 # Build VYNR on structure, not borrowed style
 
-VYNR's best practical path combines five decisions. Copy the information structure of GTA VI's WAiNK scanner and Cal AI's camera-first flow, but not their look. Run Claude Haiku 5.5 for recognition and escalate to Sonnet 5.5 only on low confidence, for about **$0.27–$1.32 per 1,000 scans**. Hand-curate a per-generation spec catalog from CC0 Wikidata, public-domain EPA data and manufacturer press figures. Redact faces and plate-like text regions on the device in a small local Expo module before any upload, and fail closed if that step fails. Let Claude review PRs but never approve them itself: a deterministic job, signed as a separate GitHub App, submits the approval bound to the exact head SHA. The evidence is strong on licensing, pricing, Expo APIs and GitHub security mechanics. It is weak in three places that matter. No source describes WAiNK's visual design. No benchmark covers current models (Claude 5.x, GPT-6, Gemini 3.x) on car recognition or measures their single-image latency. No verified on-device plate-detector benchmark exists. Each of those gaps needs an in-house test before launch, and the sections below flag every place the evidence ran out.
+VYNR's best practical path combines five decisions. Copy the information structure of GTA VI's WAiNK scanner and Cal AI's camera-first flow, but not their look. Run Claude Haiku 5.5 for recognition and escalate to Sonnet 5.5 only on low confidence, for about **$0.33–$2.47 per 1,000 scans** (see "Cost per 1,000 scans as built"). Hand-curate a per-generation spec catalog from CC0 Wikidata, public-domain EPA data and manufacturer press figures. Redact faces and plate-like text regions on the device in a small local Expo module before any upload, and fail closed if that step fails. Let Claude review PRs but never approve them itself: a deterministic job, signed as a separate GitHub App, submits the approval bound to the exact head SHA. The evidence is strong on licensing, pricing, Expo APIs and GitHub security mechanics. It is weak in three places that matter. No source describes WAiNK's visual design. No benchmark covers current models (Claude 5.x, GPT-6, Gemini 3.x) on car recognition or measures their single-image latency. No verified on-device plate-detector benchmark exists. Each of those gaps needs an in-house test before launch, and the sections below flag every place the evidence ran out.
 
 ## WAiNK supplies a pattern to copy; Cal AI supplies the flow and the mistakes to avoid
 
@@ -69,7 +69,7 @@ Even Sonnet 5.5 costs under one cent per scan, so accuracy should decide the mod
 **Recommendation.**
 
 - **Default model:** call Haiku 5.5 with thinking off. Send a 1024 px JPEG, cache the system prompt, request strict JSON output (make, model, generation, the top three candidates, a confidence score) and set `max_tokens` to about 400. Retry when output is cut off at the token limit ([Structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)). Set `"oversized_image": "error"` so an oversized photo is rejected rather than silently downscaled ([Vision docs](https://platform.claude.com/docs/en/build-with-claude/vision)).
-- **Cost control:** skip repeat scans of the same image by hashing it first. Escalate to Sonnet 5.5 only when confidence is low or the top three are close. At an assumed 20% escalation rate this totals about **$1.32 per 1,000 scans**.
+- **Cost control:** skip repeat scans of the same image by hashing it first. Escalate to Sonnet 5.5 only when confidence is low or the top three are close. At an assumed 20% escalation rate this totals about **$2.47 per 1,000 scans** with the shipped settings (corrected; see "Cost per 1,000 scans as built").
 - **Before committing:** build a labelled set of 300–500 real phone photos and test Haiku 5.5, Sonnet 5.5, Gemini 3.1 Flash-Lite and gpt-6-luna on it, measuring accuracy and time to first token. The 2025–2026 papers suggest Gemini could win on accuracy. Insert candidate generations from VYNR's own catalog into the prompt, since retrieval is what closes the new-model gap.
 
 ## Free, legal spec data exists, but only as a hand-curated catalog
@@ -191,3 +191,29 @@ Before relying on this, confirm on a test PR that the App's approval satisfies t
 The five areas share a lesson: the hard problems are trust boundaries, not capability. Recognition is cheap enough to ignore, and expo-camera is fast enough. The risks sit at the edges: Rockstar's trade dress, a data vendor's redistribution clause, a raw photo leaving the phone, and an LLM holding approval power. In each case the winning design puts a deterministic, auditable layer between something powerful and something irreversible. That layer is an original visual language over a borrowed structure, a source URL on every spec field, a native redaction step that fails closed, and a non-LLM job that approves one exact SHA.
 
 The biggest unknown is not cost but accuracy at generation level on real phone photos. The 2026 literature hints that Google's Flash tier may beat Claude there, and that retrieval from VYNR's own catalog may matter more than the choice of model. So the curated catalog does double duty, as the game's content and as the recogniser's reference. A small in-house evaluation set is therefore the highest-value next deliverable. Three other open questions also need first-hand checks before they harden into decisions: WAiNK's actual visuals, plate-detection recall, and whether a GitHub App's approval counts.
+
+## Architectural decisions (as built)
+
+What was implemented from the recommendations above, and where it differs.
+
+| Area | Built | Notes |
+| --- | --- | --- |
+| Design | Original "Dusk" system, aperture logo, scanner as home tab, one-tap register | No WAiNK visuals were verifiable, so only the information pattern is borrowed (docs/DESIGN.md) |
+| Recognition | Haiku 5.5 (thinking off, low effort, 1,024 output tokens) → Sonnet 5.5 (adaptive thinking, low effort) when confidence < 0.7 or the top two models are within 0.15 | Structured JSON output; refusals and bad output retry on Sonnet; billed by the model that answered |
+| Cost control | Persistent per-install / per-IP limits, global daily request cap, daily ($5) and monthly ($50) dollar ceilings with worst-case reservation, 24 h duplicate cache, in-flight coalescing, concurrency cap, timeouts, one SDK retry | All state in one SQLite file (`STATE_FILE`) |
+| Specs | 66 generations from Wikipedia (CC BY-SA, attributed by link per record) | Wikidata and EPA were unreachable from the build environment; they remain the preferred bulk sources |
+| Redaction | Local Expo module: iOS Vision faces + text rectangles, Android ML Kit faces + text boxes; pixelate; fail closed | Not yet compiled or device-tested |
+| Confidence | Bands only, labelled uncalibrated | Until the benchmark shows bands are reliable |
+| Intel | Seeded, on-device, stored with the encounter; security grades independent of the vehicle | docs/INTEL.md |
+| PR review | `ci.yml` (no secrets) → `claude-review.yml` on `workflow_run`: Claude read-only with JSON verdict; non-LLM job approves as the `vynr-reviewer` App with `commit_id` | claude-code-action pinned to v1.0.290 by SHA; protected paths never auto-approved; never merges |
+
+### Cost per 1,000 scans as built
+
+Assumptions: the app sends 1024×768 JPEGs, which bill as ceil(1024/28) × ceil(768/28) = 1,036 image tokens. The system prompt is about 460 tokens; with the JSON schema and message framing, assume 800 more, so **1,836 input tokens per call**. Output: Haiku without thinking about 300 tokens; Sonnet with low-effort adaptive thinking about 700.
+
+| Call | Input | Output | Cost per call | Per 1,000 calls |
+| --- | --- | --- | --- | --- |
+| Haiku 5.5 | 1,836 × $0.10/M = $0.000184 | 300 × $0.50/M = $0.000150 | $0.000334 | **$0.33** |
+| Sonnet 5.5 | 1,836 × $2/M = $0.003672 | 700 × $10/M = $0.007000 | $0.010672 | $10.67 |
+
+Per 1,000 scans: Haiku only $0.33; with 10% escalated $0.33 + $1.07 = **$1.40**; with 20% escalated $0.33 + $2.13 = **$2.47**. The earlier summary figure of $1.32 at 20% escalation understated the Sonnet call (it used 300 output tokens with thinking off); the table above reflects the settings actually shipped. Duplicate photos cost nothing within 24 hours. The server reserves the worst case before each call (full output caps: about $0.035 for a scan that escalates), so the $5 daily ceiling can never be exceeded even under concurrent load. All of this is estimated from list prices; the benchmark and the Anthropic console give the real figure.

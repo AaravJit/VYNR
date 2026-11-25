@@ -1,6 +1,6 @@
 # VYNR
 
-VYNR is a mobile car-spotting collection game. Photograph a car you see in public, get it identified, review or correct the result, and add it to your garage. Every vehicle has a rarity from a curated catalog, and finding new ones earns XP, levels, achievements and daily and weekly contracts.
+VYNR is a mobile car-spotting collection game: Cal AI for cars, styled like a phone app from an open-world game. Open it straight into the camera, photograph a car you see in public, get an identification with verified specs and some (clearly simulated) street intel, and register the discovery in your garage. Every vehicle has a rarity from a curated catalog, and finding new ones earns XP, levels, achievements and daily and weekly contracts.
 
 It is built with Expo (SDK 58), React Native, TypeScript, Expo Router and SQLite. It works offline-first: all progress lives on the device. Real identification uses a small server (in `server/`) that holds the AI credentials, so the app never contains any secret.
 
@@ -20,6 +20,8 @@ If Expo Go's bundled native modules do not match this SDK, build the app locally
 ```bash
 npx expo run:ios        # or: npx expo run:android
 ```
+
+**Face and plate blurring needs a development build.** It is a local native module (`modules/vynr-redaction`), which Expo Go cannot load. In Expo Go every scan is marked "not blurred", so photos are never uploaded or kept and you identify cars from the catalog (or use the simulated provider).
 
 To install on a phone without a local toolchain, use an EAS internal build: `npx eas-cli@latest build --profile preview`.
 
@@ -48,14 +50,16 @@ Release builds never fall back to simulation. With no server configured they off
 | Path | What it is |
 | --- | --- |
 | `src/app/` | Expo Router screens (onboarding, tabs, scanner, identify, discovery, vehicle, privacy) |
-| `src/domain/` | Pure game engine: XP, levels, duplicates, contracts, achievements, stats |
-| `src/catalog/` | Curated vehicle catalog (36 makes, 133 generations) and search |
+| `src/domain/` | Pure game engine: XP, levels, duplicates, contracts, achievements, stats, simulated street intel |
+| `src/catalog/` | Curated vehicle catalog (36 makes, 133 generations), search, and verified specs (generated from `data/specs.json`) |
 | `src/db/` | SQLite schema, migrations and repository |
 | `src/recognition/` | Recognition provider interface, simulated and remote providers, response validation, catalog matching |
 | `src/services/` | Game service, image preparation and metadata stripping, data export |
 | `src/state/` | App store (SQLite-backed) and scan session |
 | `src/components/`, `src/theme/` | UI kit and design tokens |
-| `server/` | Recognition server (Node, no framework) |
+| `modules/vynr-redaction/` | Local Expo module: on-device face and plate pixelation (iOS Vision, Android ML Kit) |
+| `server/` | Recognition server (Node, no framework), plus the recognition benchmark in `server/scripts/` |
+| `.github/` | CI, the Claude review workflow and CODEOWNERS |
 | `test/` | Unit, integration (real SQLite) and UI tests |
 | `docs/` | Architecture, privacy, data provenance, deployment |
 
@@ -64,9 +68,15 @@ Release builds never fall back to simulation. With no server configured they off
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): how the app, engine, storage and recognition fit together
 - [docs/PRIVACY.md](docs/PRIVACY.md): what data is collected, sent and kept, and the safety rules
 - [docs/DATA_PROVENANCE.md](docs/DATA_PROVENANCE.md): where the catalog comes from and how rarity is assigned
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md): deploying the server and shipping the app
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md): deploying the server and shipping the app, with cost per 1,000 scans
+- [docs/DESIGN.md](docs/DESIGN.md): the "Dusk" design system
+- [docs/INTEL.md](docs/INTEL.md): how simulated street intel works and its hard rules
+- [docs/BENCHMARK.md](docs/BENCHMARK.md): the real-photo recognition benchmark
+- [docs/PR_REVIEW_SETUP.md](docs/PR_REVIEW_SETUP.md): setting up automated PR review
+- [RESEARCH.md](RESEARCH.md): research behind the phase 2 decisions
+- [CLAUDE.md](CLAUDE.md): rules for Claude in this repo, including the PR review policy
 - [IMPLEMENTATION.md](IMPLEMENTATION.md), [TASKS.md](TASKS.md), [PROGRESS.md](PROGRESS.md): build plan, task list and status, including test results and known limitations
 
 ## Safety
 
-VYNR is for spotting cars from public places. Never use it while driving, never enter private property or restricted areas, and never touch or approach a vehicle to photograph it. The app does not read licence plates and never interacts with any vehicle's locks, keys, electronics or security systems.
+VYNR is for spotting cars from public places. Never use it while driving, never enter private property or restricted areas, and never touch or approach a vehicle to photograph it. The app blurs faces and plates on the phone, never reads licence plates, and never interacts with any vehicle's locks, keys, electronics or security systems.

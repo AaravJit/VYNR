@@ -1,35 +1,39 @@
 # Progress
 
-Status as of 25 November 2026: **MVP feature-complete and verified in automated tests and native bundle builds. Not yet run on a physical device or simulator** (the build environment had no iOS or Android runtime). Real AI identification is implemented and unit-tested against a mocked API, but has **not** been exercised against the live Anthropic API because no key was available.
+Status as of 25 November 2026: **Phase 2 (immersion, accuracy, autonomous review) implemented and verified by automated tests and native bundle builds.** Still **not run on a physical device or simulator**, and the live Anthropic API and the new native redaction module have **not** been exercised: the build environment had no iOS or Android runtime and no API key.
 
-## Verification results
+## Verification results (phase 2)
 
 | Check | Command | Result |
 | --- | --- | --- |
 | Type check (app) | `npm run typecheck` | Pass, strict mode |
 | Lint | `npm run lint` | Pass, 0 warnings |
-| App tests | `npm test` | **99/99 pass** in 9 suites |
+| App tests | `npm test` | **184/184 pass** in 13 suites |
 | Server type check | `npm --prefix server run typecheck` | Pass |
-| Server tests | `npm --prefix server test` | **26/26 pass** |
-| Native bundles | `npm run export:check` | iOS and Android Hermes bundles build |
-| Server smoke test | start with and without a key, call `/health` and `/v1/recognize` | Refuses to start without a key; health and validation respond correctly |
+| Server tests | `npm --prefix server test` | **39/39 pass** |
+| Native bundles | `EXPO_OFFLINE=1 npm run export:check` | iOS and Android Hermes bundles build |
+| Spec data | `npm run build:specs` | 66 records validated against the catalog and regenerated |
+| Native redaction module (Swift/Kotlin) | needs `expo prebuild` + Xcode / Gradle | **Not compiled.** No native toolchain in the build environment |
+| Recognition benchmark | `node server/scripts/benchmark.ts` | **Not run.** Harness tested with a fake provider only (docs/BENCHMARK.md) |
+| Screenshots | | **None.** No simulator was available, so none are included |
 
-What the app tests cover:
+New in phase 2 and covered by tests:
 
-- **Domain** (deterministic, fixed clock): XP per rarity, duplicate decay and cooldown, level curve, contract generation and progress, achievements, manufacturer completion, milestones, unknown-vehicle cap, ledger totals.
-- **Catalog**: unique ids, valid enums and years, no duplicate generations, no spec fields, coverage of every country and rarity, search with aliases and diacritics.
-- **Recognition**: strict response validation (malformed, out-of-range, injected control characters), alias matching, generation disambiguation, mock determinism, remote client HTTP error mapping, timeouts, release-build mode resolution.
-- **Image privacy**: EXIF, GPS, ICC and comment stripping with image data preserved.
-- **Integration on real SQLite**: migrations and constraints, atomic rollback on failure, state identical after closing and reopening, the full acceptance flow through the store, export without device paths, delete-all including photos, database failure shown as an error state.
-- **UI**: home, the identify flow with simulated recognition, manual correction, save failure and retry, double-tap protection, expired scans, the consent gate (no network call without consent), and the daily cap.
-
-Server tests cover request validation, metadata stripping before the provider, per-install and per-IP limits, the global budget and its UTC reset, the concurrency cap, timeouts, error mapping without leaking details, proxy-header trust, log hygiene, the Claude request shape, refusal and invalid output handling, and drift between shared code copies.
+- **Redaction gate**: a photo whose faces and plates were not blurred is never uploaded and never kept; no allowance is used (UI tests for `unavailable`, `failed` and `redacted`).
+- **Confidence**: shown as a band ("Strong / Possible / Weak match"), never a percentage (UI test asserts no `%`).
+- **Street intel**: deterministic per seed; tracker and alarm grades identical across very different cars with the same seed; no repeated lines; the avoid set works; no security or theft wording anywhere in the catalog (scans every vehicle).
+- **Migration v2**: a real v1 database upgrades in place keeping its rows; intel survives a restart; field notes never store intel.
+- **Photo cleanup**: a thumbnail saved for an encounter that then fails to record is deleted.
+- **Specs**: every record belongs to a catalog generation and cites an https source; generations without a record show nothing.
+- **Scanner as home**: camera permission explanation, no capture without permission, shutter disabled until the camera is ready.
+- **Server**: persistent rate limits and spend ledger survive a restart; daily and monthly dollar ceilings; worst-case reservation and settlement (including failed, billed calls); duplicate-photo cache and in-flight coalescing; Haiku → Sonnet escalation rules; cost accounting uses the model that actually answered.
+- **Benchmark harness**: scoring and error handling.
 
 ## Acceptance criteria
 
 | Step | Status |
 | --- | --- |
-| Launch → onboarding | Implemented, UI-tested for home; onboarding not covered by an automated test |
+| Launch → onboarding → scanner | Implemented; scanner (now the home tab) UI-tested; onboarding not covered by an automated test |
 | Camera permission | Implemented with expo-camera; needs a device to verify |
 | Photograph a vehicle | Implemented; needs a device to verify |
 | Real identification when configured | Implemented end to end; tested with mocks only, not against the live API |
@@ -44,9 +48,10 @@ Server tests cover request validation, metadata stripping before the provider, p
 Run on a physical iPhone and Android phone before release:
 
 1. Fresh install. Go through onboarding: safety rules must be ticked, choose cloud consent, enter a callsign, grant camera permission.
-2. Open the scanner, photograph a car, check the AI or SIMULATED label, confidence and catalog record.
+2. The scanner opens first. Photograph a car with a person and a plate in frame: the report's chip must say areas were blurred, and the saved thumbnail (if Keep photos is on) must show them pixelated. Check the AI or SIMULATED label, the match band, the verified specs with source link, and the STREET INTEL panel.
+2a. In Expo Go (no redaction module) the report must say "Photo kept on this phone" and nothing is uploaded.
 3. Tap "Not right?" and pick another vehicle. Confirm the "IDENTIFIED BY YOU" label.
-4. Confirm. Check the discovery reveal, XP and level change, and contract progress.
+4. Tap "Register discovery". Check the reveal animation, the sound (rarer cars use a different one), the haptic, XP and level change, contract progress, and that "Continue scanning" returns to the camera.
 5. Scan the same car again within 10 minutes: it should show "Logged recently" and +0 XP.
 6. Force-quit and reopen. All progress must still be there.
 7. Turn off cloud consent in Profile. Scan again: no network request, manual identification is offered.
@@ -56,20 +61,25 @@ Run on a physical iPhone and Android phone before release:
 
 ## Known limitations
 
-- **Not run on a device or simulator yet.** Layout, camera behaviour, haptics and performance on real hardware are unverified.
-- **Live AI not exercised.** The Claude integration is tested with a fake client. The first live run may need prompt or schema tuning.
-- **No plate or face blurring before upload.** Mitigated by downscaling, zero retention and model instructions. See docs/PRIVACY.md.
-- **Honor system for manual picks.** A player can photograph anything and choose any catalog vehicle. Duplicate decay, the cooldown and a finite catalog bound the impact. Fine for single-player; must be solved before leaderboards.
+- **Not run on a device or simulator yet.** Layout, camera start-up time, haptics, sounds and performance on real hardware are unverified.
+- **Redaction module not compiled or device-tested.** It fails closed (no upload, no thumbnail) if it does not load, but detection quality (missed small or angled plates, faces in profile) is unmeasured. The Android ML Kit versions in `modules/vynr-redaction/android/build.gradle` need confirming at first build.
+- **Live AI not exercised and accuracy unmeasured.** The benchmark has not been run, so confidence bands are self-reported, not calibrated.
+- **Specs cover 66 of 133 generations**, transcribed from Wikipedia with AI assistance and spot-checked; they need a human review before release (docs/DATA_PROVENANCE.md).
+- **Cost figures are estimates** from published prices, not measured.
+- **Automated PR review is not active** until the owner creates the reviewer App, secrets and ruleset (docs/PR_REVIEW_SETUP.md). The workflow has not run yet.
+- **Honor system for manual picks.** Fine for single-player; must be solved before leaderboards.
 - **The simulated provider ignores the photo.** It exists only to test the loop.
-- **The install id is not attestation.** Per-IP and global limits are the real abuse boundary.
-- **Server limits are in memory.** Single instance only; counters reset on restart.
+- **The install id is not attestation.** Per-IP, global and spend limits are the real abuse boundary.
+- **Server state is one SQLite file**, so run one instance with a persistent volume.
 - **Catalog years are approximate** and need a human review.
-- **No account or cloud backup.** Uninstalling the app loses progress unless the player exported it.
+- **No account or cloud backup.**
 - **No repository licence** has been chosen.
 
 ## Remaining external configuration
 
-1. Anthropic API key, monthly spend limit, and an HTTPS host for `server/` (docs/DEPLOYMENT.md).
+1. Anthropic API key, workspace spend limit, and an HTTPS host with a persistent volume for `server/` (docs/DEPLOYMENT.md).
+1a. A development build (`eas build --profile development`) to compile the redaction module; Expo Go cannot load it.
+1b. Reviewer GitHub App, `pr-review` environment secrets, `ANTHROPIC_API_KEY` repository secret and the branch ruleset (docs/PR_REVIEW_SETUP.md).
 2. `EXPO_PUBLIC_RECOGNITION_ENDPOINT` in the EAS build environment.
 3. Expo account; Apple Developer Program and Google Play Console for distribution.
 4. Confirm or change the bundle id `com.aaravjit.vynr`.
@@ -91,5 +101,15 @@ Reviews during the build and a final audit against the brief found and fixed:
 - Owner review: recognition started awaiting work before it could be cancelled, and it read consent from the screen's render. Cancellation now starts first, and consent is re-checked from storage immediately before the photo is sent. An already-cancelled request sends nothing (tested).
 - Owner review: an ambiguous generation was pre-selected. The player must now choose the generation explicitly (tested).
 - Owner review: release builds could opt into simulated recognition. They no longer can (tested).
+
+Phase 2 (PR #1 review findings, all with regression tests):
+
+- Cancellation now starts before any await and is re-checked before upload; consent is read from storage at each step; pre-aborted signals send nothing.
+- Server quotas are persistent and atomic (SQLite, `BEGIN IMMEDIATE`), with global daily and monthly spend ceilings that reserve worst-case cost first.
+- Faces and plates are pixelated on device before any upload or retention; failure blocks both.
+- A photo saved for an encounter that fails to record is deleted.
+- Ambiguous generations still require an explicit choice; confidence is never shown as a percentage.
+- Release builds cannot construct the simulated provider even if config resolution were bypassed.
+- Missing specs are stated plainly instead of left blank; the old lime visual identity is gone.
 
 Checked and found sound: no secrets in the app bundle or repository; no location collection; no OCR anywhere; mock recognition cannot ship by accident in release builds; every AI response is validated on both client and server; and no vehicle-interaction features exist.

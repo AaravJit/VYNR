@@ -16,13 +16,16 @@ The app asks for camera permission only. It has no location permission (location
 
 ## What happens to a photo
 
-1. The camera capture is resized to at most 1024 px on the longest edge and re-encoded as JPEG at quality 0.7. This keeps enough detail to recognise a car's shape while making small text much harder to read.
-2. EXIF, GPS, XMP, ICC and comment segments are stripped by `stripJpegMetadata` as a second safeguard after the re-encode.
-3. The original full-resolution capture and the encoder's temporary file are deleted immediately.
-4. The prepared image stays in memory for the current scan only.
-5. It is sent to the recognition server **only** when the build is configured for real recognition **and** the player has given cloud consent. Without consent the app offers manual identification.
-6. The server strips metadata again, sends the image to the AI provider, returns the result and keeps nothing. It never writes images to disk or logs them.
-7. After the sighting is saved, the image is discarded unless Keep photos is on.
+1. **Faces and plates are pixelated on the phone first.** The local module `modules/vynr-redaction` finds faces (Apple Vision `VNDetectFaceRectanglesRequest` on iOS, ML Kit face detection on Android) and text-like regions such as number plates (Vision text *rectangles* on iOS, ML Kit text-recognition *bounding boxes* on Android), pads each box by 18% and pixelates it. Plate text is never read or stored; only box positions are used, and only for this one image. Text regions larger than 20% of the frame are skipped, because they are usually signage rather than plates.
+   - If the module is missing (for example in Expo Go) or fails, the scan is marked *not blurred*: it is **never uploaded and never kept**. The player identifies the car from the catalog instead.
+   - The report shows a chip with what happened ("2 areas blurred", "Checked · nothing to blur" or "Not blurred · stays on phone").
+2. The capture is resized to at most 1024 px on the longest edge and re-encoded as JPEG at quality 0.7. This keeps enough detail to recognise a car's shape while making small text much harder to read.
+3. EXIF, GPS, XMP, ICC and comment segments are stripped by `stripJpegMetadata` as a second safeguard after the re-encode.
+4. The original full-resolution capture, the redacted intermediate and the encoder's temporary file are deleted immediately.
+5. The prepared image stays in memory for the current scan only.
+6. It is sent to the recognition server **only** when the build is configured for real recognition, the player has given cloud consent, **and** redaction succeeded. Without consent the app offers manual identification.
+7. The server strips metadata again, sends the image to the AI provider and returns the result. It never writes images to disk or logs them. It keeps a SHA-256 hash of the image with the recognition result for 24 hours, so an identical photo is answered without a second paid call; the hash cannot be turned back into the image.
+8. After the sighting is saved, the image is discarded unless Keep photos is on **and** it was redacted.
 
 The AI provider (Anthropic) processes the image under its API terms. Check its current data retention terms and reflect them in your privacy policy.
 
@@ -31,14 +34,14 @@ The AI provider (Anthropic) processes the image under its API terms. Check its c
 - The app never performs licence plate recognition. No OCR runs on the device or the server.
 - The server's instructions tell the model to identify make, model and generation only, and never to read, transcribe or mention plates, people, faces, addresses or locations. Text in the image is treated as scene content, not instructions.
 - Recognition responses are validated against a fixed schema, so free text can only appear in the short, length-capped `notes` field.
-- **Limitation:** plates and faces are not blurred before upload. Reliable on-device redaction needs a detection model, which is out of scope for this MVP. The mitigations are downscaling, no retention anywhere, and the model instructions. Adding on-device plate and face blurring is the top privacy item in TASKS.md.
+- **Limitation:** automatic detection can miss a face or plate (small, angled, partly hidden or unusual plates). Downscaling, no image retention on the server and the model instructions remain as further layers. The native module has not yet been compiled and tested on a device: see PROGRESS.md for the device test script.
 
 ## Credentials and abuse protection
 
 - The app contains no secrets. `EXPO_PUBLIC_*` values (recognition mode and endpoint) are public by design.
 - The Anthropic API key exists only in the server's environment.
 - Requests carry an anonymous install id: the first 32 hex characters of SHA-256(`vynr-rate-limit:` + random player id). It cannot be linked back to the player and is used only for rate limiting.
-- Cost controls stack: 40 automatic identifications per device per day in the app; per-install and per-IP minute and day limits on the server; a concurrency cap; a global daily request budget; and a monthly spend limit you set in the Anthropic console.
+- Cost controls stack: 40 automatic identifications per device per day in the app; persistent per-install and per-IP minute and day limits on the server; a concurrency cap; a global daily request budget; daily and monthly dollar ceilings that reserve each call's worst-case cost before it runs; a 24-hour duplicate-photo cache; and the workspace spend limit you set in the Anthropic console.
 - Every request and response is validated on both sides. The client treats the server as untrusted, and the server treats the model as untrusted.
 - **Limitation:** the install id is not device attestation. A determined attacker can rotate ids, which is why the per-IP and global limits exist. For a public launch, add App Attest (iOS) or Play Integrity (Android). See TASKS.md.
 

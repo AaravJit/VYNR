@@ -4,7 +4,11 @@
 //
 // Env: GH_TOKEN (App installation token), GITHUB_REPOSITORY, PR, HEAD_SHA, VERDICT_JSON.
 
-const { GH_TOKEN, GITHUB_REPOSITORY: repo, PR, HEAD_SHA, VERDICT_JSON } = process.env;
+const GH_TOKEN = process.env.GH_TOKEN;
+const repo = process.env.GITHUB_REPOSITORY;
+const PR = process.env.PR;
+const HEAD_SHA = process.env.HEAD_SHA;
+const VERDICT_JSON = process.env.VERDICT_JSON;
 const API = 'https://api.github.com';
 
 // Changes here need a human code owner. The bot may comment but never approves them.

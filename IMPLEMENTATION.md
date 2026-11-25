@@ -38,3 +38,20 @@ This is the plan the MVP was built against. Design details are in [docs/ARCHITEC
 10. Adversarial audit and fixes.
 
 All phases are complete. See [PROGRESS.md](PROGRESS.md) for results and [TASKS.md](TASKS.md) for what remains.
+
+## Phase 2: immersion, accuracy, autonomous review
+
+Evidence and alternatives are in [RESEARCH.md](RESEARCH.md). Decisions:
+
+| Decision | Why |
+| --- | --- |
+| Scanner is the first tab; old home becomes "Career" | Cal AI pattern: open → shoot → result, two taps to a registered discovery |
+| "Dusk" palette, Inter Tight only, aperture logo, synthesised sounds | Original identity in the spirit of an in-game phone app; nothing copied from Rockstar (docs/DESIGN.md) |
+| Confidence shown as a band, not a % | Model confidence is self-reported and unbenchmarked |
+| Specs from Wikipedia per generation, with source links, options listed not guessed | Only legally usable source reachable; CC BY-SA attribution by link; no fabrication |
+| Street intel generated on the phone from a seed and stored with the encounter | Free, offline, stable, and provably independent of real security |
+| Local Expo module for redaction (Apple Vision / ML Kit), fail-closed | Platform detectors, no model to ship, nothing unblurred leaves the phone |
+| Haiku 5.5 first, Sonnet 5.5 only when unsure; SQLite server state | ~$0.33–$2.47 per 1,000 scans (estimate); quotas and spend survive restarts without new infrastructure |
+| Claude reviews read-only; a separate non-LLM job approves as a GitHub App, bound to the SHA | The model never holds approval power; approval is independent of the author; never auto-merge |
+
+Steps: research → cost controls and server state → design tokens and scanner → redaction module and photo pipeline → intel engine and migration → specs data → report and discovery screens → tests → review workflow → docs and verification.

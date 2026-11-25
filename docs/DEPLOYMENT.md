@@ -7,7 +7,8 @@ There are two parts to ship: the recognition server (optional; without it the ap
 ### What you need
 
 - An Anthropic API key from https://platform.claude.com/. **Set a monthly spend limit in the console** as the outer cost ceiling.
-- Any host that runs Node 22.18+ or a Docker container and terminates HTTPS: for example Fly.io, Render, Railway, Google Cloud Run or a small VM behind Caddy. The server is stateless and needs no database.
+- Any host that runs Node 22.18+ or a Docker container and terminates HTTPS: for example Fly.io, Render, Railway or a small VM behind Caddy.
+- **A persistent disk** for one small SQLite file (`STATE_FILE`). It holds rate-limit counters, the daily and monthly spend ledger and a 24-hour result cache, so limits survive restarts and redeploys.
 
 ### Configuration
 
@@ -16,13 +17,15 @@ All settings are environment variables. The full list with defaults is in `serve
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `ANTHROPIC_API_KEY` | (required) | The server refuses to start without it |
-| `RECOGNITION_MODEL` | `claude-opus-5-5` | Vision model. Requests also enable server-side fallback models |
-| `GLOBAL_DAILY_REQUEST_BUDGET` | 2000 | Hard cap on AI calls per UTC day across everyone. Size it to your budget |
-| `RATE_PER_INSTALL_PER_DAY` | 50 | Per device |
-| `RATE_PER_IP_PER_DAY` | 300 | Per IP address |
+| `RECOGNITION_MODEL` | `claude-haiku-5-5` | Fast first pass |
+| `RECOGNITION_ESCALATION_MODEL` | `claude-sonnet-5-5` | Second opinion only when the first answer is unsure or two models are close. `off` disables it |
+| `DAILY_SPEND_LIMIT_USD` / `MONTHLY_SPEND_LIMIT_USD` | 5 / 50 | Hard ceilings. Each call reserves its worst-case cost first, then settles the real cost |
+| `GLOBAL_DAILY_REQUEST_BUDGET` | 2000 | Hard cap on model calls per UTC day across everyone |
+| `RATE_PER_INSTALL_PER_DAY` / `RATE_PER_IP_PER_DAY` | 50 / 300 | Per device and per IP, persisted |
+| `STATE_FILE` | `./data/vynr-state.sqlite` | Put it on the persistent volume (`/app/data` in Docker) |
 | `TRUST_PROXY` | off | Turn on only behind a reverse proxy that appends `X-Forwarded-For`, otherwise clients can spoof their IP |
 
-Limits are kept in memory per instance and the daily budget resets on restart. Run a **single instance**, or move the counters to a shared store such as Redis before scaling out.
+State is a single SQLite file, so run **one instance** (vertical scaling is plenty at this volume). Moving the store to Postgres or Redis is the step before scaling out.
 
 ### Run
 
@@ -31,16 +34,26 @@ cd server
 npm ci --omit=dev
 ANTHROPIC_API_KEY=... node src/index.ts
 # or
-docker build -t vynr-recognition . && docker run -p 8787:8787 -e ANTHROPIC_API_KEY=... vynr-recognition
+docker build -t vynr-recognition . && docker run -p 8787:8787 -v vynr-data:/app/data -e ANTHROPIC_API_KEY=... vynr-recognition
 ```
 
 Check it with `curl https://<host>/health`, which returns `{"ok":true,"provider":"anthropic"}`.
 
-The server only answers `GET /health` and `POST /v1/recognize`. Its logs contain method, path, status and duration only.
+The server only answers `GET /health` and `POST /v1/recognize`. Its logs contain method, path, status, duration and, when a spend ceiling is hit, a warning. Never request bodies.
 
 ### Cost
 
-Each identification is one Messages API call with one image of up to 1024 px (roughly 1,000–1,500 input tokens) and a short structured answer at low effort. Multiply by `GLOBAL_DAILY_REQUEST_BUDGET` with current pricing to get your worst-case daily spend.
+Estimates for 1,000 successful scans at the default settings, from published prices (Haiku 5.5 $0.10 / $0.50 and Sonnet 5.5 $2 / $10 per million input / output tokens). Working is in RESEARCH.md, "Cost per 1,000 scans as built".
+
+| Setup | Per 1,000 scans |
+| --- | --- |
+| Haiku only (`RECOGNITION_ESCALATION_MODEL=off`) | about $0.33 |
+| Default, if 10% of scans escalate to Sonnet | about $1.40 |
+| Default, if 20% escalate | about $2.47 |
+
+The escalation rate is unknown until the benchmark runs; most of the cost is the escalated calls. If cost matters more than the second opinion, raise the bar for escalating (`ESCALATE_BELOW_CONFIDENCE=0.5`) or turn it off.
+
+Identical photos inside 24 hours are answered from the cache at no cost. These are estimates, not measurements: check the real figure in the Anthropic console after the first week, and keep a workspace spend limit there as the outer ceiling.
 
 ## 2. Mobile app
 
