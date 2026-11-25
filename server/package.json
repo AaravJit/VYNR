@@ -1,0 +1,22 @@
+{
+  "name": "vynr-recognition-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Stateless recognition proxy for VYNR. Holds AI credentials server-side and enforces rate limits and cost caps.",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "start": "node src/index.ts",
+    "test": "node --test --test-reporter=spec \"test/**/*.test.ts\"",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.14.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.7",
+    "typescript": "~6.0.3"
+  }
+}
