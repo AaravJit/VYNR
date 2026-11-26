@@ -10,7 +10,8 @@
 - [ ] Account bootstrap in the app and discovery claim with `recognitionId`
 - [ ] Apple and Google verifiers with credentials (owner)
 - [ ] Device tests of live scanning; tune thresholds from measurements
-- [ ] Owner decisions: Wikipedia specs, AutoDB sample and licence, legal review
+- [x] Owner decision: Wikipedia specs approved (26 Nov 2026); shown with CC BY-SA 4.0 attribution and share-alike notice
+- [ ] Owner decisions: AutoDB sample and licence, legal review
 
 ## Done (MVP)
 

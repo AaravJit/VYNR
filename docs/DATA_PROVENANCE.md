@@ -22,7 +22,14 @@
 
 **Options, not a guess.** Engines, drivetrains and transmissions are the options offered for the whole generation. The app says so and never claims which one the photographed car has.
 
-**Source and licence.** Each record cites the English Wikipedia article it was taken from, accessed 25 November 2026, and the app shows that link under the figures. Wikipedia text is licensed CC BY-SA 4.0. The records restate individual facts (figures, names of options) rather than copying prose, and each is attributed with a link, which is how we meet the attribution requirement. If the project ever copies descriptive text from Wikipedia, that text must carry the same licence.
+**Source and licence.** Each record cites the English Wikipedia article it was taken from, accessed 25 November 2026. Wikipedia text is licensed CC BY-SA 4.0. The owner approved using this data on 26 November 2026, recorded in `src/catalog/dataSources.ts`.
+
+How VYNR meets CC BY-SA 4.0:
+- **Attribution (section 3(a)).** Wherever specs appear, the app shows the source article links, the credit "adapted from English Wikipedia articles by Wikipedia contributors", a note of the changes made, a link to the licence, and a link to the adapted dataset. `isApproved()` refuses a source that has no recorded approval or attribution, so specs cannot be shown without the credit.
+- **Share-alike (section 3(b)).** The adapted data (`data/specs.json` and the generated `src/catalog/specs.data.ts`) is licensed CC BY-SA 4.0, stated in `data/LICENSE-specs.md` and in the generated file's header. It is published in the public repository, and the app links to it. The licence covers only the data, not VYNR's code or artwork.
+- **No added restrictions (section 2(a)(5)(B)).** VYNR does not add terms or technical measures that stop anyone reusing the spec data under CC BY-SA.
+- If the project ever copies descriptive text from Wikipedia, that text must carry the same licence and credit.
+- The app's terms of service and store listing must not claim exclusive rights over this data. Add a "Data licences" entry with the same credit to the in-app legal screen when it is built.
 
 **Known limits of this data.**
 - Values were transcribed from the articles by an AI-assisted research pass and spot-checked, not reviewed line by line. Review each record against manufacturer press material before a public release.

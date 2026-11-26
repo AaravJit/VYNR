@@ -1,7 +1,8 @@
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import { CATEGORY_LABELS, catalog, COUNTRY_NAMES, formatYears, RARITY_LABELS } from '@/catalog';
-import { formatPower, getSpecs, type VehicleSpecs } from '@/catalog/specs';
+import type { Attribution } from '@/catalog/dataSources';
+import { formatPower, getSpecs, specsAttribution, type VehicleSpecs } from '@/catalog/specs';
 import { GAME_CONFIG } from '@/domain/config';
 import type { CatalogVehicle } from '@/domain/types';
 import { colors, rarityColors, space } from '@/theme/tokens';
@@ -42,7 +43,7 @@ function engineLine(e: VehicleSpecs['engines'][number]): string {
   return parts.length ? parts.join(' · ') : e.name;
 }
 
-function SpecSection({ specs }: { specs: VehicleSpecs }) {
+function SpecSection({ specs, attribution }: { specs: VehicleSpecs; attribution: Attribution }) {
   return (
     <>
       {specs.chassis ? (
@@ -115,6 +116,9 @@ function SpecSection({ specs }: { specs: VehicleSpecs }) {
         <Txt variant="small" color={colors.textFaint}>
           Options offered for this generation. VYNR cannot tell which one this car has.
         </Txt>
+        <Txt variant="small" color={colors.textFaint}>
+          Transcribed with AI assistance and spot-checked. It may contain errors.
+        </Txt>
         {specs.sources.map((s) => (
           <Pressable key={s.url} accessibilityRole="link" accessibilityLabel={`Source: ${s.title}`} onPress={() => void Linking.openURL(s.url)}>
             <Txt variant="small" color={colors.blue} numberOfLines={1}>
@@ -122,6 +126,27 @@ function SpecSection({ specs }: { specs: VehicleSpecs }) {
             </Txt>
           </Pressable>
         ))}
+        <Txt variant="small" color={colors.textFaint}>
+          {`${attribution.credit}. ${attribution.changes}. This data is available under the same licence.`}
+        </Txt>
+        <Pressable
+          accessibilityRole="link"
+          accessibilityLabel={`Licence: ${attribution.licenceName}`}
+          onPress={() => void Linking.openURL(attribution.licenceUrl)}
+        >
+          <Txt variant="small" color={colors.blue}>
+            Licence: {attribution.licenceName}
+          </Txt>
+        </Pressable>
+        <Pressable
+          accessibilityRole="link"
+          accessibilityLabel="Get this spec data"
+          onPress={() => void Linking.openURL(attribution.adaptedDataUrl)}
+        >
+          <Txt variant="small" color={colors.blue}>
+            Get this spec data
+          </Txt>
+        </Pressable>
       </View>
     </>
   );
@@ -134,6 +159,7 @@ function SpecSection({ specs }: { specs: VehicleSpecs }) {
 export function VehicleFacts({ vehicle }: { vehicle: CatalogVehicle }) {
   const m = catalog.getManufacturer(vehicle.manufacturerId);
   const specs = getSpecs(vehicle.id);
+  const attribution = specsAttribution();
   return (
     <Panel style={{ gap: space.md }}>
       <View style={styles.header}>
@@ -157,8 +183,8 @@ export function VehicleFacts({ vehicle }: { vehicle: CatalogVehicle }) {
       <Row label="Rarity" value={RARITY_LABELS[vehicle.rarity]} color={rarityColors[vehicle.rarity].fg} />
       <Divider />
       <Row label="Base reward" value={`${GAME_CONFIG.rarityXp[vehicle.rarity].toLocaleString()} XP`} color={colors.accent} />
-      {specs ? (
-        <SpecSection specs={specs} />
+      {specs && attribution ? (
+        <SpecSection specs={specs} attribution={attribution} />
       ) : (
         <>
           <Divider />

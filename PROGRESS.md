@@ -2,7 +2,7 @@
 
 ## Prompt 3 (integration branch `integration/prompt3`, draft PR #3), 25 November 2026
 
-- PR #1 and PR #2 reconciled on one branch. Wikipedia-derived specs quarantined.
+- PR #1 and PR #2 reconciled on one branch. Wikipedia-derived specs were quarantined, then released on 26 Nov 2026 after the owner approved them under CC BY-SA 4.0 (credit, licence link, change note and data link shown in the app; tested in `test/specs.test.ts` and `test/ui/vehicleFacts.test.tsx`).
 - **Automatic live scanning replaces the shutter.** On-device gates decide when a frame may be sent, and redaction still fails closed.
 - **Server-authoritative economy:** accounts, VC ledger, verified discoveries, collectibles with provenance, crates with published odds, VC-only marketplace, achievements, seasons, cosmetics, profiles with report and block, and subscription entitlements. Billing refuses every purchase until store credentials exist.
 - Verified: `npm run verify` (267 app tests, 87 server tests), native bundle export, economy simulation with all invariants holding.

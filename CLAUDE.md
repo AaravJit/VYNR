@@ -13,10 +13,11 @@ conventions and commands. Changes to this file need the owner's review
   seeded game flavour: its tracker and alarm grades depend only on the seed,
   and it is always labelled simulated.
 - **Never fabricate.** Specs are shown only from a source marked approved in
-  `src/catalog/dataSources.ts` and recorded in `docs/DATA_SOURCES.md`; the
-  current Wikipedia-derived `data/specs.json` is quarantined until the owner
-  approves it. When a generation had several engines or gearboxes, show them
-  all; do not guess which one the photographed car has. Do not show model
+  `src/catalog/dataSources.ts` and recorded in `docs/DATA_SOURCES.md`. The
+  Wikipedia-derived `data/specs.json` was approved by the owner on 26 Nov 2026
+  under CC BY-SA 4.0: always show its credit, licence and data links, and keep
+  the data itself under CC BY-SA (`data/LICENSE-specs.md`). When a generation
+  had several engines or gearboxes, show them all; do not guess which one the photographed car has. Do not show model
   confidence as a percentage or call it calibrated.
 - **Privacy.** Faces and plates are pixelated on the phone before any upload or
   saved thumbnail. If redaction is unavailable or fails, nothing is uploaded

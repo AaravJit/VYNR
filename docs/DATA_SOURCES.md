@@ -5,7 +5,7 @@
 | Dataset | Licence | Status | Gate | Notes |
 | --- | --- | --- | --- | --- |
 | Curated VYNR catalog (makes, models, generations, years, category, rarity) | Original compilation of facts | **In use** | n/a | See DATA_PROVENANCE.md |
-| `src/catalog/specs.data.ts` (66 generations from English Wikipedia, accessed 25 Nov 2026) | CC BY-SA 4.0 | **Quarantined** | `src/catalog/dataSources.ts` returns nothing until status is `approved` | Transcribed by an AI pass, spot-checked only. Needs owner approval of CC BY-SA facts, or re-verification against a licensed source |
+| `src/catalog/specs.data.ts` (66 generations from English Wikipedia, accessed 25 Nov 2026) | CC BY-SA 4.0 | **In use** (owner approved 26 Nov 2026) | `src/catalog/dataSources.ts`: shown only while the entry is `approved` with a recorded approval and attribution | Shown with credit, source links, change note, licence link and a link to the adapted data, which is itself CC BY-SA 4.0 (`data/LICENSE-specs.md`). Transcribed by an AI pass and spot-checked, so the app says it may contain errors |
 | AutoDB Car Database | Commercial, see below | **Not purchased** | n/a | Owner approved, then put on hold pending sample, US coverage and written licence confirmation |
 | EPA FuelEconomy.gov | US government data | Candidate | n/a | Free; no power, torque or weight |
 | Market values | None | **Not available** | Feature flag off | No licensed, current source; VYNR shows no market values |

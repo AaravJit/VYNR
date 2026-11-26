@@ -8,7 +8,7 @@ Branch `integration/prompt3`, draft PR #3. Last updated 25 November 2026. Nothin
 | --- | --- | --- | --- |
 | 1 | **Integration of PR #1 and PR #2** | Done: PR #2 is the base; PR #1's redaction and contrast tests are ported; the uncompiled native module is removed | Tests, bundle build |
 | 1 | **Automatic live scanning** (no shutter) | Done in code: frame sampling, ML Kit box proposals, target selection and tracking, sharpness, exposure and stability gates, perceptual-hash duplicate suppression, cooldown, session cap, idle pause, backoff, crop to target, fail-closed redaction, shared consent and allowance checks, result card with alternatives and "try another angle", haptics, reduced-motion aware | 23 unit tests for the policy and loop, UI tests. **Not run on a device** |
-| 2 | Vehicle intelligence | Unchanged from PR #2: catalog facts and seeded, labelled fictional street intel. Wikipedia-derived specs are **quarantined** (not shown) pending approval | Tests |
+| 2 | Vehicle intelligence | Unchanged from PR #2: catalog facts and seeded, labelled fictional street intel. Wikipedia-derived specs **shown** since the owner approved them on 26 Nov 2026, with CC BY-SA 4.0 credit, licence and data links | Tests |
 | 3 | Ownership, progression, VC | Server: verified discoveries, collectibles with provenance, ledger, achievements (discovery and ownership tracks), XP | 44 economy tests and HTTP tests |
 | 4 | Crates | Server: 8 pools, published odds, pity, idempotent opening, interruption recovery, deterministic showroom | Tests, including a distribution test |
 | 5 | Marketplace | Server: list, search and filter, buy, cancel, provenance, sale history, wishlist, watchlist, 5% burned fee, price bounds, trade hold, eligibility, block | Tests, including races across two connections |
@@ -23,7 +23,7 @@ Branch `integration/prompt3`, draft PR #3. Last updated 25 November 2026. Nothin
 | --- | --- | --- |
 | PR #2 as the integration base | PR #1 as base | Camera-first home, quieter design closer to Prompt 3's "Cal AI simplicity", persistent quota store and model tiering already there |
 | PR #1's redaction (ML Kit modules plus JS pixelation) | PR #2's custom Swift/Kotlin module | Maintained modules, tested pixelation; the custom module had never compiled |
-| Quarantine Wikipedia specs | Ship them with attribution | CC BY-SA share-alike obligations and the owner's directive; needs an owner decision |
+| Quarantine Wikipedia specs, then release on approval | Ship them with attribution at once | CC BY-SA share-alike obligations and the owner's directive. Owner approved on 26 Nov 2026; released with credit, change note, licence link and the adapted data published under CC BY-SA |
 | Live scanning with periodic silent stills | Vision Camera frame processors | No new native dependency, works with expo-camera; 0.7 s cadence is enough for parked cars |
 | ML Kit default detector as a class-agnostic box proposer | ML Kit image labeling base model (has "Car") | The maintained Expo labeling module only loads custom models; vehicle confirmation stays in the cloud answer |
 | Cloud gate: steady target, sharp, exposed, new view, 4 s cooldown, 12 per session | Every N seconds | "Do not continuously transmit every camera frame" |
@@ -41,7 +41,7 @@ Run on 25 November 2026 in the cloud build environment (no device, no simulator,
 
 | Check | Command | Result |
 | --- | --- | --- |
-| App type check, lint and tests | `npm run verify` (app part) | Pass. **267/267 tests** in 19 suites |
+| App type check, lint and tests | `npm run verify` (app part) | Pass. **270/270 tests** in 20 suites (26 Nov 2026, after the spec release) |
 | Server type check and tests | `npm run verify` (server part) | Pass. **87/87 tests** |
 | Native bundles | `EXPO_OFFLINE=1 npm run export:check` | iOS and Android Hermes bundles built |
 | Economy simulation | `node server/scripts/simulate-economy.ts 90 240 1` | All invariants hold (see `ECONOMY.md`) |
@@ -75,7 +75,6 @@ What the tests prove (all against mocks or in-memory databases, **not** devices 
 | --- | --- |
 | Device testing | A development build on a real iPhone and Android phone (instructions above) |
 | Anthropic API key on a server | Owner credential, for live recognition and the accuracy benchmark |
-| Wikipedia spec data | Approve or reject use under CC BY-SA 4.0 (quarantined until then) |
 | AutoDB | Network allowlist for autodb.store, or upload the free sample. Then written licence confirmation before any purchase |
 | VYNR Black | App Store Connect and Play Console products, App Store Server API key, Google service account, sandbox testers |
 | Legal review | Loot-box rules for earned-only crates (PEGI, UK ASA), consumer and subscription disclosure, privacy policy, age rating |
@@ -85,7 +84,7 @@ What the tests prove (all against mocks or in-memory databases, **not** devices 
 
 - [ ] Device tests pass on iOS and Android. Redaction recall checked on real photos of plates and faces.
 - [ ] Benchmark run on real photos. Escalation rate and cost per call measured.
-- [ ] Spec source approved, or the specs remain hidden.
+- [x] Spec source approved (Wikipedia, CC BY-SA 4.0, 26 Nov 2026). Review records against manufacturer material before release.
 - [ ] Store products configured; verifiers implemented with credentials; sandbox purchase, renewal, grace, refund and restore tested.
 - [ ] Client screens for crates (odds visible before Open), market, garage, season and paywall, with disclosures.
 - [ ] Privacy policy and in-app account deletion reviewed. Store privacy labels filled in.

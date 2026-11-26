@@ -1,4 +1,4 @@
-import { isApproved } from './dataSources';
+import { type Attribution, attributionFor, isApproved } from './dataSources';
 import { SPEC_ACCESSED, SPECS } from './specs.data';
 
 /** The licensing register entry that governs every record in specs.data.ts. */
@@ -48,8 +48,13 @@ export function getSpecs(vehicleId: string): VehicleSpecs | undefined {
   return SPECS[vehicleId];
 }
 
+/** The credit, licence and change note that must be shown wherever specs are shown. */
+export function specsAttribution(): Attribution | undefined {
+  return attributionFor(SPECS_SOURCE);
+}
+
 /** For audits and tests only: the stored record regardless of approval. Never render this. */
-export function getQuarantinedSpecs(vehicleId: string): VehicleSpecs | undefined {
+export function getStoredSpecs(vehicleId: string): VehicleSpecs | undefined {
   return SPECS[vehicleId];
 }
 
