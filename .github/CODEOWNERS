@@ -1,0 +1,12 @@
+# Changes to automation, review policy and agent configuration always need the
+# owner's review. The automated reviewer never approves these paths.
+/.github/              @AaravJit
+/.claude/              @AaravJit
+/CLAUDE.md             @AaravJit
+/AGENTS.md             @AaravJit
+/.mcp.json             @AaravJit
+/docs/PR_REVIEW_SETUP.md @AaravJit
+# Spend and quota limits for the paid vision API.
+/server/src/config.ts  @AaravJit
+/server/src/pricing.ts @AaravJit
+/server/src/store.ts   @AaravJit

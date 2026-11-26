@@ -1,0 +1,1897 @@
+{
+ "version": 1,
+ "manufacturers": [
+  {
+   "id": "toyota",
+   "name": "Toyota",
+   "country": "JP",
+   "aliases": []
+  },
+  {
+   "id": "lexus",
+   "name": "Lexus",
+   "country": "JP",
+   "aliases": []
+  },
+  {
+   "id": "honda",
+   "name": "Honda",
+   "country": "JP",
+   "aliases": [
+    "acura"
+   ]
+  },
+  {
+   "id": "nissan",
+   "name": "Nissan",
+   "country": "JP",
+   "aliases": [
+    "datsun"
+   ]
+  },
+  {
+   "id": "mazda",
+   "name": "Mazda",
+   "country": "JP",
+   "aliases": []
+  },
+  {
+   "id": "subaru",
+   "name": "Subaru",
+   "country": "JP",
+   "aliases": []
+  },
+  {
+   "id": "mitsubishi",
+   "name": "Mitsubishi",
+   "country": "JP",
+   "aliases": [
+    "mitsubishi motors"
+   ]
+  },
+  {
+   "id": "volkswagen",
+   "name": "Volkswagen",
+   "country": "DE",
+   "aliases": [
+    "vw"
+   ]
+  },
+  {
+   "id": "bmw",
+   "name": "BMW",
+   "country": "DE",
+   "aliases": [
+    "bmw m",
+    "bayerische motoren werke"
+   ]
+  },
+  {
+   "id": "mercedes-benz",
+   "name": "Mercedes-Benz",
+   "country": "DE",
+   "aliases": [
+    "mercedes",
+    "mercedes benz",
+    "mercedes-amg",
+    "amg",
+    "benz"
+   ]
+  },
+  {
+   "id": "audi",
+   "name": "Audi",
+   "country": "DE",
+   "aliases": [
+    "audi sport"
+   ]
+  },
+  {
+   "id": "porsche",
+   "name": "Porsche",
+   "country": "DE",
+   "aliases": []
+  },
+  {
+   "id": "ford",
+   "name": "Ford",
+   "country": "US",
+   "aliases": []
+  },
+  {
+   "id": "chevrolet",
+   "name": "Chevrolet",
+   "country": "US",
+   "aliases": [
+    "chevy"
+   ]
+  },
+  {
+   "id": "dodge",
+   "name": "Dodge",
+   "country": "US",
+   "aliases": [
+    "srt"
+   ]
+  },
+  {
+   "id": "jeep",
+   "name": "Jeep",
+   "country": "US",
+   "aliases": []
+  },
+  {
+   "id": "tesla",
+   "name": "Tesla",
+   "country": "US",
+   "aliases": []
+  },
+  {
+   "id": "cadillac",
+   "name": "Cadillac",
+   "country": "US",
+   "aliases": []
+  },
+  {
+   "id": "rivian",
+   "name": "Rivian",
+   "country": "US",
+   "aliases": []
+  },
+  {
+   "id": "mini",
+   "name": "MINI",
+   "country": "GB",
+   "aliases": [
+    "mini cooper"
+   ]
+  },
+  {
+   "id": "land-rover",
+   "name": "Land Rover",
+   "country": "GB",
+   "aliases": [
+    "landrover",
+    "range rover"
+   ]
+  },
+  {
+   "id": "jaguar",
+   "name": "Jaguar",
+   "country": "GB",
+   "aliases": []
+  },
+  {
+   "id": "aston-martin",
+   "name": "Aston Martin",
+   "country": "GB",
+   "aliases": [
+    "aston"
+   ]
+  },
+  {
+   "id": "mclaren",
+   "name": "McLaren",
+   "country": "GB",
+   "aliases": [
+    "mclaren automotive"
+   ]
+  },
+  {
+   "id": "rolls-royce",
+   "name": "Rolls-Royce",
+   "country": "GB",
+   "aliases": [
+    "rolls royce"
+   ]
+  },
+  {
+   "id": "bentley",
+   "name": "Bentley",
+   "country": "GB",
+   "aliases": []
+  },
+  {
+   "id": "lotus",
+   "name": "Lotus",
+   "country": "GB",
+   "aliases": []
+  },
+  {
+   "id": "fiat",
+   "name": "Fiat",
+   "country": "IT",
+   "aliases": [
+    "abarth"
+   ]
+  },
+  {
+   "id": "alfa-romeo",
+   "name": "Alfa Romeo",
+   "country": "IT",
+   "aliases": [
+    "alfa"
+   ]
+  },
+  {
+   "id": "maserati",
+   "name": "Maserati",
+   "country": "IT",
+   "aliases": []
+  },
+  {
+   "id": "ferrari",
+   "name": "Ferrari",
+   "country": "IT",
+   "aliases": []
+  },
+  {
+   "id": "lamborghini",
+   "name": "Lamborghini",
+   "country": "IT",
+   "aliases": [
+    "lambo"
+   ]
+  },
+  {
+   "id": "pagani",
+   "name": "Pagani",
+   "country": "IT",
+   "aliases": []
+  },
+  {
+   "id": "hyundai",
+   "name": "Hyundai",
+   "country": "KR",
+   "aliases": [
+    "hyundai n"
+   ]
+  },
+  {
+   "id": "kia",
+   "name": "Kia",
+   "country": "KR",
+   "aliases": []
+  },
+  {
+   "id": "genesis",
+   "name": "Genesis",
+   "country": "KR",
+   "aliases": []
+  }
+ ],
+ "vehicles": [
+  {
+   "id": "toyota-corolla-e210",
+   "manufacturerId": "toyota",
+   "model": "Corolla",
+   "generation": "E210",
+   "yearStart": 2018,
+   "yearEnd": null,
+   "category": "sedan",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "toyota-camry-xv70",
+   "manufacturerId": "toyota",
+   "model": "Camry",
+   "generation": "XV70",
+   "yearStart": 2017,
+   "yearEnd": 2024,
+   "category": "sedan",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "toyota-rav4-xa50",
+   "manufacturerId": "toyota",
+   "model": "RAV4",
+   "generation": "XA50",
+   "yearStart": 2018,
+   "yearEnd": 2025,
+   "category": "suv",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "toyota-prius-xw60",
+   "manufacturerId": "toyota",
+   "model": "Prius",
+   "generation": "XW60",
+   "yearStart": 2022,
+   "yearEnd": null,
+   "category": "hatchback",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "toyota-tacoma-n300",
+   "manufacturerId": "toyota",
+   "model": "Tacoma",
+   "generation": "3rd gen (N300)",
+   "yearStart": 2015,
+   "yearEnd": 2023,
+   "category": "pickup",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "toyota-gr86-zn8",
+   "manufacturerId": "toyota",
+   "model": "GR86",
+   "generation": "ZN8",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "sports",
+   "rarity": "uncommon",
+   "aliases": [
+    "86",
+    "gr 86"
+   ]
+  },
+  {
+   "id": "toyota-gr-supra-j29",
+   "manufacturerId": "toyota",
+   "model": "GR Supra",
+   "generation": "J29 (A90/A91)",
+   "yearStart": 2019,
+   "yearEnd": null,
+   "category": "sports",
+   "rarity": "rare",
+   "aliases": [
+    "supra",
+    "gr supra",
+    "a90"
+   ]
+  },
+  {
+   "id": "toyota-supra-a80",
+   "manufacturerId": "toyota",
+   "model": "Supra",
+   "generation": "A80",
+   "yearStart": 1993,
+   "yearEnd": 2002,
+   "category": "sports",
+   "rarity": "rare",
+   "aliases": [
+    "mk4 supra",
+    "supra mk4"
+   ]
+  },
+  {
+   "id": "toyota-gr-yaris",
+   "manufacturerId": "toyota",
+   "model": "GR Yaris",
+   "generation": "GXPA16",
+   "yearStart": 2020,
+   "yearEnd": null,
+   "category": "hatchback",
+   "rarity": "rare",
+   "aliases": [
+    "gr yaris"
+   ]
+  },
+  {
+   "id": "toyota-land-cruiser-j300",
+   "manufacturerId": "toyota",
+   "model": "Land Cruiser",
+   "generation": "J300",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "offroad",
+   "rarity": "uncommon",
+   "aliases": [
+    "land cruiser 300",
+    "lc300"
+   ]
+  },
+  {
+   "id": "lexus-is-xe30",
+   "manufacturerId": "lexus",
+   "model": "IS",
+   "generation": "XE30",
+   "yearStart": 2013,
+   "yearEnd": null,
+   "category": "sedan",
+   "rarity": "uncommon",
+   "aliases": [
+    "is350",
+    "is300",
+    "is 350",
+    "is 300"
+   ]
+  },
+  {
+   "id": "lexus-lfa",
+   "manufacturerId": "lexus",
+   "model": "LFA",
+   "generation": "LFA10",
+   "yearStart": 2010,
+   "yearEnd": 2012,
+   "category": "supercar",
+   "rarity": "legendary",
+   "aliases": []
+  },
+  {
+   "id": "honda-civic-11",
+   "manufacturerId": "honda",
+   "model": "Civic",
+   "generation": "11th gen",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "sedan",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "honda-civic-type-r-fl5",
+   "manufacturerId": "honda",
+   "model": "Civic Type R",
+   "generation": "FL5",
+   "yearStart": 2022,
+   "yearEnd": null,
+   "category": "hatchback",
+   "rarity": "rare",
+   "aliases": [
+    "type r",
+    "civic type-r"
+   ]
+  },
+  {
+   "id": "honda-accord-10",
+   "manufacturerId": "honda",
+   "model": "Accord",
+   "generation": "10th gen",
+   "yearStart": 2017,
+   "yearEnd": 2022,
+   "category": "sedan",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "honda-cr-v-6",
+   "manufacturerId": "honda",
+   "model": "CR-V",
+   "generation": "6th gen",
+   "yearStart": 2022,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "common",
+   "aliases": [
+    "crv"
+   ]
+  },
+  {
+   "id": "honda-nsx-na",
+   "manufacturerId": "honda",
+   "model": "NSX",
+   "generation": "NA1/NA2",
+   "yearStart": 1990,
+   "yearEnd": 2005,
+   "category": "supercar",
+   "rarity": "exotic",
+   "aliases": [
+    "acura nsx"
+   ]
+  },
+  {
+   "id": "honda-nsx-nc1",
+   "manufacturerId": "honda",
+   "model": "NSX",
+   "generation": "NC1",
+   "yearStart": 2016,
+   "yearEnd": 2022,
+   "category": "supercar",
+   "rarity": "exotic",
+   "aliases": [
+    "acura nsx"
+   ]
+  },
+  {
+   "id": "honda-s2000",
+   "manufacturerId": "honda",
+   "model": "S2000",
+   "generation": "AP1/AP2",
+   "yearStart": 1999,
+   "yearEnd": 2009,
+   "category": "convertible",
+   "rarity": "rare",
+   "aliases": []
+  },
+  {
+   "id": "nissan-altima-l34",
+   "manufacturerId": "nissan",
+   "model": "Altima",
+   "generation": "L34",
+   "yearStart": 2018,
+   "yearEnd": null,
+   "category": "sedan",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "nissan-rogue-t33",
+   "manufacturerId": "nissan",
+   "model": "Rogue",
+   "generation": "T33",
+   "yearStart": 2020,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "common",
+   "aliases": [
+    "x-trail"
+   ]
+  },
+  {
+   "id": "nissan-z-rz34",
+   "manufacturerId": "nissan",
+   "model": "Z",
+   "generation": "RZ34",
+   "yearStart": 2022,
+   "yearEnd": null,
+   "category": "sports",
+   "rarity": "uncommon",
+   "aliases": [
+    "400z",
+    "nissan z"
+   ]
+  },
+  {
+   "id": "nissan-gt-r-r35",
+   "manufacturerId": "nissan",
+   "model": "GT-R",
+   "generation": "R35",
+   "yearStart": 2007,
+   "yearEnd": 2025,
+   "category": "supercar",
+   "rarity": "exotic",
+   "aliases": [
+    "gtr",
+    "gt r"
+   ]
+  },
+  {
+   "id": "nissan-skyline-gt-r-r34",
+   "manufacturerId": "nissan",
+   "model": "Skyline GT-R",
+   "generation": "R34",
+   "yearStart": 1999,
+   "yearEnd": 2002,
+   "category": "sports",
+   "rarity": "legendary",
+   "aliases": [
+    "skyline",
+    "r34",
+    "skyline gtr"
+   ]
+  },
+  {
+   "id": "mazda-mx-5-nd",
+   "manufacturerId": "mazda",
+   "model": "MX-5",
+   "generation": "ND",
+   "yearStart": 2015,
+   "yearEnd": null,
+   "category": "convertible",
+   "rarity": "uncommon",
+   "aliases": [
+    "miata",
+    "mx5",
+    "mx-5 miata"
+   ]
+  },
+  {
+   "id": "mazda-rx-7-fd",
+   "manufacturerId": "mazda",
+   "model": "RX-7",
+   "generation": "FD",
+   "yearStart": 1992,
+   "yearEnd": 2002,
+   "category": "sports",
+   "rarity": "rare",
+   "aliases": [
+    "rx7"
+   ]
+  },
+  {
+   "id": "mazda-cx-5-kf",
+   "manufacturerId": "mazda",
+   "model": "CX-5",
+   "generation": "KF",
+   "yearStart": 2017,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "common",
+   "aliases": [
+    "cx5"
+   ]
+  },
+  {
+   "id": "mazda-3-bp",
+   "manufacturerId": "mazda",
+   "model": "Mazda3",
+   "generation": "BP",
+   "yearStart": 2019,
+   "yearEnd": null,
+   "category": "hatchback",
+   "rarity": "common",
+   "aliases": [
+    "3",
+    "mazda 3"
+   ]
+  },
+  {
+   "id": "subaru-wrx-vb",
+   "manufacturerId": "subaru",
+   "model": "WRX",
+   "generation": "VB",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "sedan",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "subaru-outback-bt",
+   "manufacturerId": "subaru",
+   "model": "Outback",
+   "generation": "BT",
+   "yearStart": 2019,
+   "yearEnd": 2025,
+   "category": "wagon",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "subaru-brz-zd8",
+   "manufacturerId": "subaru",
+   "model": "BRZ",
+   "generation": "ZD8",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "sports",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "mitsubishi-lancer-evo-x",
+   "manufacturerId": "mitsubishi",
+   "model": "Lancer Evolution",
+   "generation": "X",
+   "yearStart": 2007,
+   "yearEnd": 2016,
+   "category": "sedan",
+   "rarity": "rare",
+   "aliases": [
+    "evo",
+    "evo x",
+    "lancer evo"
+   ]
+  },
+  {
+   "id": "volkswagen-golf-mk8",
+   "manufacturerId": "volkswagen",
+   "model": "Golf",
+   "generation": "Mk8",
+   "yearStart": 2019,
+   "yearEnd": null,
+   "category": "hatchback",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "volkswagen-golf-gti-mk8",
+   "manufacturerId": "volkswagen",
+   "model": "Golf GTI",
+   "generation": "Mk8",
+   "yearStart": 2020,
+   "yearEnd": null,
+   "category": "hatchback",
+   "rarity": "uncommon",
+   "aliases": [
+    "gti"
+   ]
+  },
+  {
+   "id": "volkswagen-beetle-type-1",
+   "manufacturerId": "volkswagen",
+   "model": "Beetle",
+   "generation": "Type 1",
+   "yearStart": 1938,
+   "yearEnd": 2003,
+   "category": "coupe",
+   "rarity": "uncommon",
+   "aliases": [
+    "bug",
+    "kafer",
+    "käfer",
+    "type 1"
+   ]
+  },
+  {
+   "id": "volkswagen-id4",
+   "manufacturerId": "volkswagen",
+   "model": "ID.4",
+   "generation": "1st gen",
+   "yearStart": 2020,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "common",
+   "aliases": [
+    "id4",
+    "id 4"
+   ]
+  },
+  {
+   "id": "volkswagen-jetta-a7",
+   "manufacturerId": "volkswagen",
+   "model": "Jetta",
+   "generation": "A7",
+   "yearStart": 2018,
+   "yearEnd": null,
+   "category": "sedan",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "bmw-3-series-g20",
+   "manufacturerId": "bmw",
+   "model": "3 Series",
+   "generation": "G20",
+   "yearStart": 2018,
+   "yearEnd": null,
+   "category": "sedan",
+   "rarity": "common",
+   "aliases": [
+    "330i",
+    "320i",
+    "3-series",
+    "m340i"
+   ]
+  },
+  {
+   "id": "bmw-m3-g80",
+   "manufacturerId": "bmw",
+   "model": "M3",
+   "generation": "G80",
+   "yearStart": 2020,
+   "yearEnd": null,
+   "category": "sedan",
+   "rarity": "rare",
+   "aliases": []
+  },
+  {
+   "id": "bmw-m3-e30",
+   "manufacturerId": "bmw",
+   "model": "M3",
+   "generation": "E30",
+   "yearStart": 1986,
+   "yearEnd": 1991,
+   "category": "coupe",
+   "rarity": "exotic",
+   "aliases": []
+  },
+  {
+   "id": "bmw-m5-f90",
+   "manufacturerId": "bmw",
+   "model": "M5",
+   "generation": "F90",
+   "yearStart": 2017,
+   "yearEnd": 2024,
+   "category": "sedan",
+   "rarity": "rare",
+   "aliases": []
+  },
+  {
+   "id": "bmw-x5-g05",
+   "manufacturerId": "bmw",
+   "model": "X5",
+   "generation": "G05",
+   "yearStart": 2018,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "bmw-i8",
+   "manufacturerId": "bmw",
+   "model": "i8",
+   "generation": "I12/I15",
+   "yearStart": 2014,
+   "yearEnd": 2020,
+   "category": "sports",
+   "rarity": "exotic",
+   "aliases": []
+  },
+  {
+   "id": "mercedes-c-class-w206",
+   "manufacturerId": "mercedes-benz",
+   "model": "C-Class",
+   "generation": "W206",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "sedan",
+   "rarity": "common",
+   "aliases": [
+    "c class",
+    "c300",
+    "c-klasse"
+   ]
+  },
+  {
+   "id": "mercedes-g-class-w463-2",
+   "manufacturerId": "mercedes-benz",
+   "model": "G-Class",
+   "generation": "W463 (2nd gen)",
+   "yearStart": 2018,
+   "yearEnd": null,
+   "category": "offroad",
+   "rarity": "rare",
+   "aliases": [
+    "g wagon",
+    "g-wagon",
+    "g63",
+    "g class",
+    "g550"
+   ]
+  },
+  {
+   "id": "mercedes-sprinter-vs30",
+   "manufacturerId": "mercedes-benz",
+   "model": "Sprinter",
+   "generation": "VS30",
+   "yearStart": 2018,
+   "yearEnd": null,
+   "category": "van",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "mercedes-amg-gt-c190",
+   "manufacturerId": "mercedes-benz",
+   "model": "AMG GT",
+   "generation": "C190",
+   "yearStart": 2014,
+   "yearEnd": 2021,
+   "category": "sports",
+   "rarity": "exotic",
+   "aliases": [
+    "amg gt",
+    "gt"
+   ]
+  },
+  {
+   "id": "mercedes-300-sl-w198",
+   "manufacturerId": "mercedes-benz",
+   "model": "300 SL",
+   "generation": "W198",
+   "yearStart": 1954,
+   "yearEnd": 1963,
+   "category": "coupe",
+   "rarity": "legendary",
+   "aliases": [
+    "gullwing",
+    "300sl"
+   ]
+  },
+  {
+   "id": "mercedes-amg-one",
+   "manufacturerId": "mercedes-benz",
+   "model": "AMG ONE",
+   "generation": "C298",
+   "yearStart": 2022,
+   "yearEnd": null,
+   "category": "hypercar",
+   "rarity": "legendary",
+   "aliases": [
+    "amg one",
+    "project one"
+   ]
+  },
+  {
+   "id": "audi-a4-b9",
+   "manufacturerId": "audi",
+   "model": "A4",
+   "generation": "B9",
+   "yearStart": 2015,
+   "yearEnd": 2024,
+   "category": "sedan",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "audi-q5-fy",
+   "manufacturerId": "audi",
+   "model": "Q5",
+   "generation": "FY",
+   "yearStart": 2017,
+   "yearEnd": 2024,
+   "category": "suv",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "audi-tt-8s",
+   "manufacturerId": "audi",
+   "model": "TT",
+   "generation": "8S",
+   "yearStart": 2014,
+   "yearEnd": 2023,
+   "category": "coupe",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "audi-rs6-avant-c8",
+   "manufacturerId": "audi",
+   "model": "RS 6 Avant",
+   "generation": "C8",
+   "yearStart": 2019,
+   "yearEnd": null,
+   "category": "wagon",
+   "rarity": "rare",
+   "aliases": [
+    "rs6",
+    "rs 6",
+    "rs6 avant"
+   ]
+  },
+  {
+   "id": "audi-r8-4s",
+   "manufacturerId": "audi",
+   "model": "R8",
+   "generation": "Type 4S",
+   "yearStart": 2015,
+   "yearEnd": 2024,
+   "category": "supercar",
+   "rarity": "exotic",
+   "aliases": []
+  },
+  {
+   "id": "porsche-911-992",
+   "manufacturerId": "porsche",
+   "model": "911",
+   "generation": "992",
+   "yearStart": 2019,
+   "yearEnd": null,
+   "category": "sports",
+   "rarity": "rare",
+   "aliases": [
+    "carrera",
+    "911 carrera"
+   ]
+  },
+  {
+   "id": "porsche-911-gt3-992",
+   "manufacturerId": "porsche",
+   "model": "911 GT3",
+   "generation": "992",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "sports",
+   "rarity": "exotic",
+   "aliases": [
+    "gt3"
+   ]
+  },
+  {
+   "id": "porsche-taycan-j1",
+   "manufacturerId": "porsche",
+   "model": "Taycan",
+   "generation": "J1",
+   "yearStart": 2019,
+   "yearEnd": null,
+   "category": "sedan",
+   "rarity": "rare",
+   "aliases": []
+  },
+  {
+   "id": "porsche-cayenne-e3",
+   "manufacturerId": "porsche",
+   "model": "Cayenne",
+   "generation": "E3",
+   "yearStart": 2017,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "porsche-macan-95b",
+   "manufacturerId": "porsche",
+   "model": "Macan",
+   "generation": "95B",
+   "yearStart": 2014,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "porsche-carrera-gt",
+   "manufacturerId": "porsche",
+   "model": "Carrera GT",
+   "generation": "980",
+   "yearStart": 2003,
+   "yearEnd": 2006,
+   "category": "supercar",
+   "rarity": "legendary",
+   "aliases": []
+  },
+  {
+   "id": "porsche-918-spyder",
+   "manufacturerId": "porsche",
+   "model": "918 Spyder",
+   "generation": "918",
+   "yearStart": 2013,
+   "yearEnd": 2015,
+   "category": "hypercar",
+   "rarity": "legendary",
+   "aliases": [
+    "918"
+   ]
+  },
+  {
+   "id": "ford-f-150-14",
+   "manufacturerId": "ford",
+   "model": "F-150",
+   "generation": "14th gen",
+   "yearStart": 2020,
+   "yearEnd": null,
+   "category": "pickup",
+   "rarity": "common",
+   "aliases": [
+    "f150",
+    "f 150"
+   ]
+  },
+  {
+   "id": "ford-maverick",
+   "manufacturerId": "ford",
+   "model": "Maverick",
+   "generation": "1st gen (P758)",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "pickup",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "ford-explorer-u625",
+   "manufacturerId": "ford",
+   "model": "Explorer",
+   "generation": "U625",
+   "yearStart": 2019,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "ford-mustang-s550",
+   "manufacturerId": "ford",
+   "model": "Mustang",
+   "generation": "S550",
+   "yearStart": 2014,
+   "yearEnd": 2023,
+   "category": "coupe",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "ford-mustang-s650",
+   "manufacturerId": "ford",
+   "model": "Mustang",
+   "generation": "S650",
+   "yearStart": 2023,
+   "yearEnd": null,
+   "category": "coupe",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "ford-bronco-u725",
+   "manufacturerId": "ford",
+   "model": "Bronco",
+   "generation": "6th gen (U725)",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "offroad",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "ford-gt-2",
+   "manufacturerId": "ford",
+   "model": "GT",
+   "generation": "2nd gen",
+   "yearStart": 2016,
+   "yearEnd": 2022,
+   "category": "supercar",
+   "rarity": "legendary",
+   "aliases": [
+    "ford gt"
+   ]
+  },
+  {
+   "id": "chevrolet-silverado-4",
+   "manufacturerId": "chevrolet",
+   "model": "Silverado",
+   "generation": "4th gen",
+   "yearStart": 2018,
+   "yearEnd": null,
+   "category": "pickup",
+   "rarity": "common",
+   "aliases": [
+    "silverado 1500"
+   ]
+  },
+  {
+   "id": "chevrolet-equinox-3",
+   "manufacturerId": "chevrolet",
+   "model": "Equinox",
+   "generation": "3rd gen",
+   "yearStart": 2017,
+   "yearEnd": 2024,
+   "category": "suv",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "chevrolet-camaro-6",
+   "manufacturerId": "chevrolet",
+   "model": "Camaro",
+   "generation": "6th gen",
+   "yearStart": 2015,
+   "yearEnd": 2023,
+   "category": "coupe",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "chevrolet-corvette-c8",
+   "manufacturerId": "chevrolet",
+   "model": "Corvette",
+   "generation": "C8",
+   "yearStart": 2019,
+   "yearEnd": null,
+   "category": "sports",
+   "rarity": "rare",
+   "aliases": [
+    "vette",
+    "stingray",
+    "corvette stingray"
+   ]
+  },
+  {
+   "id": "chevrolet-corvette-c2",
+   "manufacturerId": "chevrolet",
+   "model": "Corvette",
+   "generation": "C2",
+   "yearStart": 1962,
+   "yearEnd": 1967,
+   "category": "sports",
+   "rarity": "rare",
+   "aliases": [
+    "sting ray",
+    "stingray"
+   ]
+  },
+  {
+   "id": "dodge-charger-ld",
+   "manufacturerId": "dodge",
+   "model": "Charger",
+   "generation": "LD",
+   "yearStart": 2010,
+   "yearEnd": 2023,
+   "category": "sedan",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "dodge-challenger-lc",
+   "manufacturerId": "dodge",
+   "model": "Challenger",
+   "generation": "LC",
+   "yearStart": 2008,
+   "yearEnd": 2023,
+   "category": "coupe",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "dodge-viper-vx",
+   "manufacturerId": "dodge",
+   "model": "Viper",
+   "generation": "5th gen (VX)",
+   "yearStart": 2012,
+   "yearEnd": 2017,
+   "category": "supercar",
+   "rarity": "exotic",
+   "aliases": [
+    "srt viper"
+   ]
+  },
+  {
+   "id": "jeep-wrangler-jl",
+   "manufacturerId": "jeep",
+   "model": "Wrangler",
+   "generation": "JL",
+   "yearStart": 2017,
+   "yearEnd": null,
+   "category": "offroad",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "jeep-grand-cherokee-wl",
+   "manufacturerId": "jeep",
+   "model": "Grand Cherokee",
+   "generation": "WL",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "tesla-model-3",
+   "manufacturerId": "tesla",
+   "model": "Model 3",
+   "generation": "1st gen",
+   "yearStart": 2017,
+   "yearEnd": null,
+   "category": "sedan",
+   "rarity": "common",
+   "aliases": [
+    "model3"
+   ]
+  },
+  {
+   "id": "tesla-model-y",
+   "manufacturerId": "tesla",
+   "model": "Model Y",
+   "generation": "1st gen",
+   "yearStart": 2020,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "common",
+   "aliases": [
+    "modely"
+   ]
+  },
+  {
+   "id": "tesla-model-s",
+   "manufacturerId": "tesla",
+   "model": "Model S",
+   "generation": "1st gen",
+   "yearStart": 2012,
+   "yearEnd": null,
+   "category": "sedan",
+   "rarity": "uncommon",
+   "aliases": [
+    "models"
+   ]
+  },
+  {
+   "id": "tesla-cybertruck",
+   "manufacturerId": "tesla",
+   "model": "Cybertruck",
+   "generation": "1st gen",
+   "yearStart": 2023,
+   "yearEnd": null,
+   "category": "pickup",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "cadillac-escalade-5",
+   "manufacturerId": "cadillac",
+   "model": "Escalade",
+   "generation": "5th gen",
+   "yearStart": 2020,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "rivian-r1t",
+   "manufacturerId": "rivian",
+   "model": "R1T",
+   "generation": "1st gen",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "pickup",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "mini-hatch-f56",
+   "manufacturerId": "mini",
+   "model": "Cooper Hatch",
+   "generation": "F56",
+   "yearStart": 2013,
+   "yearEnd": 2023,
+   "category": "hatchback",
+   "rarity": "common",
+   "aliases": [
+    "cooper",
+    "mini cooper",
+    "hatch",
+    "cooper s"
+   ]
+  },
+  {
+   "id": "land-rover-defender-l663",
+   "manufacturerId": "land-rover",
+   "model": "Defender",
+   "generation": "L663",
+   "yearStart": 2019,
+   "yearEnd": null,
+   "category": "offroad",
+   "rarity": "uncommon",
+   "aliases": [
+    "defender 110",
+    "defender 90"
+   ]
+  },
+  {
+   "id": "land-rover-defender-classic",
+   "manufacturerId": "land-rover",
+   "model": "Defender",
+   "generation": "90/110 (classic)",
+   "yearStart": 1983,
+   "yearEnd": 2016,
+   "category": "offroad",
+   "rarity": "uncommon",
+   "aliases": [
+    "defender 110",
+    "defender 90",
+    "land rover 90",
+    "land rover 110"
+   ]
+  },
+  {
+   "id": "land-rover-range-rover-l460",
+   "manufacturerId": "land-rover",
+   "model": "Range Rover",
+   "generation": "L460",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "land-rover-range-rover-sport-l461",
+   "manufacturerId": "land-rover",
+   "model": "Range Rover Sport",
+   "generation": "L461",
+   "yearStart": 2022,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "jaguar-f-type-x152",
+   "manufacturerId": "jaguar",
+   "model": "F-Type",
+   "generation": "X152",
+   "yearStart": 2013,
+   "yearEnd": 2024,
+   "category": "sports",
+   "rarity": "rare",
+   "aliases": [
+    "ftype",
+    "f type"
+   ]
+  },
+  {
+   "id": "jaguar-e-type",
+   "manufacturerId": "jaguar",
+   "model": "E-Type",
+   "generation": "Series 1–3",
+   "yearStart": 1961,
+   "yearEnd": 1975,
+   "category": "sports",
+   "rarity": "exotic",
+   "aliases": [
+    "etype",
+    "e type",
+    "xke"
+   ]
+  },
+  {
+   "id": "aston-martin-db11",
+   "manufacturerId": "aston-martin",
+   "model": "DB11",
+   "generation": "1st gen",
+   "yearStart": 2016,
+   "yearEnd": 2023,
+   "category": "sports",
+   "rarity": "exotic",
+   "aliases": []
+  },
+  {
+   "id": "aston-martin-vantage-2018",
+   "manufacturerId": "aston-martin",
+   "model": "Vantage",
+   "generation": "2nd gen (2018)",
+   "yearStart": 2017,
+   "yearEnd": null,
+   "category": "sports",
+   "rarity": "exotic",
+   "aliases": []
+  },
+  {
+   "id": "aston-martin-valkyrie",
+   "manufacturerId": "aston-martin",
+   "model": "Valkyrie",
+   "generation": "1st gen",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "hypercar",
+   "rarity": "legendary",
+   "aliases": []
+  },
+  {
+   "id": "mclaren-720s",
+   "manufacturerId": "mclaren",
+   "model": "720S",
+   "generation": "1st gen",
+   "yearStart": 2017,
+   "yearEnd": 2023,
+   "category": "supercar",
+   "rarity": "exotic",
+   "aliases": []
+  },
+  {
+   "id": "mclaren-artura",
+   "manufacturerId": "mclaren",
+   "model": "Artura",
+   "generation": "1st gen",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "supercar",
+   "rarity": "exotic",
+   "aliases": []
+  },
+  {
+   "id": "mclaren-f1",
+   "manufacturerId": "mclaren",
+   "model": "F1",
+   "generation": "1st gen",
+   "yearStart": 1992,
+   "yearEnd": 1998,
+   "category": "hypercar",
+   "rarity": "legendary",
+   "aliases": []
+  },
+  {
+   "id": "rolls-royce-phantom-8",
+   "manufacturerId": "rolls-royce",
+   "model": "Phantom",
+   "generation": "VIII",
+   "yearStart": 2017,
+   "yearEnd": null,
+   "category": "sedan",
+   "rarity": "exotic",
+   "aliases": []
+  },
+  {
+   "id": "rolls-royce-cullinan",
+   "manufacturerId": "rolls-royce",
+   "model": "Cullinan",
+   "generation": "1st gen",
+   "yearStart": 2018,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "exotic",
+   "aliases": []
+  },
+  {
+   "id": "bentley-continental-gt-3",
+   "manufacturerId": "bentley",
+   "model": "Continental GT",
+   "generation": "3rd gen",
+   "yearStart": 2017,
+   "yearEnd": 2024,
+   "category": "coupe",
+   "rarity": "rare",
+   "aliases": []
+  },
+  {
+   "id": "lotus-emira",
+   "manufacturerId": "lotus",
+   "model": "Emira",
+   "generation": "1st gen",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "sports",
+   "rarity": "rare",
+   "aliases": []
+  },
+  {
+   "id": "fiat-500-312",
+   "manufacturerId": "fiat",
+   "model": "500",
+   "generation": "312",
+   "yearStart": 2007,
+   "yearEnd": 2024,
+   "category": "hatchback",
+   "rarity": "common",
+   "aliases": [
+    "cinquecento",
+    "500c"
+   ]
+  },
+  {
+   "id": "fiat-panda-319",
+   "manufacturerId": "fiat",
+   "model": "Panda",
+   "generation": "319",
+   "yearStart": 2011,
+   "yearEnd": null,
+   "category": "hatchback",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "alfa-romeo-giulia-952",
+   "manufacturerId": "alfa-romeo",
+   "model": "Giulia",
+   "generation": "952",
+   "yearStart": 2015,
+   "yearEnd": null,
+   "category": "sedan",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "alfa-romeo-stelvio-949",
+   "manufacturerId": "alfa-romeo",
+   "model": "Stelvio",
+   "generation": "949",
+   "yearStart": 2016,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "maserati-ghibli-m157",
+   "manufacturerId": "maserati",
+   "model": "Ghibli",
+   "generation": "M157",
+   "yearStart": 2013,
+   "yearEnd": 2024,
+   "category": "sedan",
+   "rarity": "rare",
+   "aliases": []
+  },
+  {
+   "id": "maserati-mc20",
+   "manufacturerId": "maserati",
+   "model": "MC20",
+   "generation": "1st gen",
+   "yearStart": 2020,
+   "yearEnd": null,
+   "category": "supercar",
+   "rarity": "exotic",
+   "aliases": []
+  },
+  {
+   "id": "ferrari-488",
+   "manufacturerId": "ferrari",
+   "model": "488",
+   "generation": "F142M",
+   "yearStart": 2015,
+   "yearEnd": 2019,
+   "category": "supercar",
+   "rarity": "exotic",
+   "aliases": [
+    "488 gtb",
+    "488 spider"
+   ]
+  },
+  {
+   "id": "ferrari-f8",
+   "manufacturerId": "ferrari",
+   "model": "F8 Tributo",
+   "generation": "F142MFL",
+   "yearStart": 2019,
+   "yearEnd": 2023,
+   "category": "supercar",
+   "rarity": "exotic",
+   "aliases": [
+    "f8",
+    "f8 spider"
+   ]
+  },
+  {
+   "id": "ferrari-roma",
+   "manufacturerId": "ferrari",
+   "model": "Roma",
+   "generation": "1st gen",
+   "yearStart": 2019,
+   "yearEnd": null,
+   "category": "coupe",
+   "rarity": "exotic",
+   "aliases": []
+  },
+  {
+   "id": "ferrari-296",
+   "manufacturerId": "ferrari",
+   "model": "296 GTB",
+   "generation": "1st gen",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "supercar",
+   "rarity": "exotic",
+   "aliases": [
+    "296",
+    "296 gts"
+   ]
+  },
+  {
+   "id": "ferrari-f40",
+   "manufacturerId": "ferrari",
+   "model": "F40",
+   "generation": "1st gen",
+   "yearStart": 1987,
+   "yearEnd": 1992,
+   "category": "supercar",
+   "rarity": "legendary",
+   "aliases": []
+  },
+  {
+   "id": "ferrari-enzo",
+   "manufacturerId": "ferrari",
+   "model": "Enzo",
+   "generation": "1st gen",
+   "yearStart": 2002,
+   "yearEnd": 2004,
+   "category": "hypercar",
+   "rarity": "legendary",
+   "aliases": [
+    "enzo ferrari"
+   ]
+  },
+  {
+   "id": "ferrari-laferrari",
+   "manufacturerId": "ferrari",
+   "model": "LaFerrari",
+   "generation": "F150",
+   "yearStart": 2013,
+   "yearEnd": 2016,
+   "category": "hypercar",
+   "rarity": "legendary",
+   "aliases": []
+  },
+  {
+   "id": "lamborghini-huracan",
+   "manufacturerId": "lamborghini",
+   "model": "Huracán",
+   "generation": "LB724",
+   "yearStart": 2014,
+   "yearEnd": 2024,
+   "category": "supercar",
+   "rarity": "exotic",
+   "aliases": [
+    "huracan"
+   ]
+  },
+  {
+   "id": "lamborghini-aventador",
+   "manufacturerId": "lamborghini",
+   "model": "Aventador",
+   "generation": "LB834",
+   "yearStart": 2011,
+   "yearEnd": 2022,
+   "category": "supercar",
+   "rarity": "exotic",
+   "aliases": []
+  },
+  {
+   "id": "lamborghini-urus",
+   "manufacturerId": "lamborghini",
+   "model": "Urus",
+   "generation": "1st gen",
+   "yearStart": 2018,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "exotic",
+   "aliases": []
+  },
+  {
+   "id": "lamborghini-countach-classic",
+   "manufacturerId": "lamborghini",
+   "model": "Countach",
+   "generation": "LP400–25th Anniversary",
+   "yearStart": 1974,
+   "yearEnd": 1990,
+   "category": "supercar",
+   "rarity": "legendary",
+   "aliases": []
+  },
+  {
+   "id": "pagani-zonda",
+   "manufacturerId": "pagani",
+   "model": "Zonda",
+   "generation": "1st gen",
+   "yearStart": 1999,
+   "yearEnd": 2019,
+   "category": "hypercar",
+   "rarity": "legendary",
+   "aliases": []
+  },
+  {
+   "id": "pagani-huayra",
+   "manufacturerId": "pagani",
+   "model": "Huayra",
+   "generation": "1st gen",
+   "yearStart": 2012,
+   "yearEnd": null,
+   "category": "hypercar",
+   "rarity": "legendary",
+   "aliases": []
+  },
+  {
+   "id": "hyundai-elantra-cn7",
+   "manufacturerId": "hyundai",
+   "model": "Elantra",
+   "generation": "CN7",
+   "yearStart": 2020,
+   "yearEnd": null,
+   "category": "sedan",
+   "rarity": "common",
+   "aliases": [
+    "avante"
+   ]
+  },
+  {
+   "id": "hyundai-elantra-n",
+   "manufacturerId": "hyundai",
+   "model": "Elantra N",
+   "generation": "CN7",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "sedan",
+   "rarity": "uncommon",
+   "aliases": [
+    "avante n"
+   ]
+  },
+  {
+   "id": "hyundai-tucson-nx4",
+   "manufacturerId": "hyundai",
+   "model": "Tucson",
+   "generation": "NX4",
+   "yearStart": 2020,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "hyundai-santa-fe-mx5",
+   "manufacturerId": "hyundai",
+   "model": "Santa Fe",
+   "generation": "MX5",
+   "yearStart": 2023,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "hyundai-ioniq-5",
+   "manufacturerId": "hyundai",
+   "model": "IONIQ 5",
+   "generation": "NE",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "common",
+   "aliases": [
+    "ioniq5",
+    "ioniq 5"
+   ]
+  },
+  {
+   "id": "hyundai-ioniq-5-n",
+   "manufacturerId": "hyundai",
+   "model": "IONIQ 5 N",
+   "generation": "NE",
+   "yearStart": 2023,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "rare",
+   "aliases": [
+    "ioniq 5n",
+    "ioniq5 n"
+   ]
+  },
+  {
+   "id": "kia-telluride",
+   "manufacturerId": "kia",
+   "model": "Telluride",
+   "generation": "1st gen",
+   "yearStart": 2019,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "kia-sportage-nq5",
+   "manufacturerId": "kia",
+   "model": "Sportage",
+   "generation": "NQ5",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "kia-sorento-mq4",
+   "manufacturerId": "kia",
+   "model": "Sorento",
+   "generation": "MQ4",
+   "yearStart": 2020,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "common",
+   "aliases": []
+  },
+  {
+   "id": "kia-ev6",
+   "manufacturerId": "kia",
+   "model": "EV6",
+   "generation": "CV",
+   "yearStart": 2021,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "kia-stinger",
+   "manufacturerId": "kia",
+   "model": "Stinger",
+   "generation": "CK",
+   "yearStart": 2017,
+   "yearEnd": 2023,
+   "category": "sedan",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "genesis-g70",
+   "manufacturerId": "genesis",
+   "model": "G70",
+   "generation": "IK",
+   "yearStart": 2017,
+   "yearEnd": null,
+   "category": "sedan",
+   "rarity": "uncommon",
+   "aliases": []
+  },
+  {
+   "id": "genesis-gv80",
+   "manufacturerId": "genesis",
+   "model": "GV80",
+   "generation": "JX1",
+   "yearStart": 2020,
+   "yearEnd": null,
+   "category": "suv",
+   "rarity": "uncommon",
+   "aliases": []
+  }
+ ]
+}
